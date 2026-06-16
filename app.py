@@ -55,16 +55,19 @@ def load_and_preprocess_data():
     upper_bound = Q3 + 1.5 * IQR
     df_clean = df_clean[(df_clean['salary_in_usd'] >= lower_bound) & (df_clean['salary_in_usd'] <= upper_bound)]
 
-    # 标签编码
-    le_experience = LabelEncoder()
+    # ✨ 核心修复 1：在函数内部必须明确定义这两个映射字典
+    exp_map = {'EN': 0, 'MI': 1, 'SE': 2, 'EX': 3}
+    size_map = {'S': 0, 'M': 1, 'L': 2}
+    
+    # 标签编码器（仅用于无序分类变量）
     le_employment = LabelEncoder()
-    le_company = LabelEncoder()
     le_location = LabelEncoder()
 
     df_encoded = df_clean.copy()
-    df_encoded['experience_level'] = le_experience.fit_transform(df_encoded['experience_level'])
+    # ✨ 核心修复 2：使用上面定义好的 map 进行转换
+    df_encoded['experience_level'] = df_encoded['experience_level'].map(exp_map)
+    df_encoded['company_size'] = df_encoded['company_size'].map(size_map)
     df_encoded['employment_type'] = le_employment.fit_transform(df_encoded['employment_type'])
-    df_encoded['company_size'] = le_company.fit_transform(df_encoded['company_size'])
     df_encoded['company_location'] = le_location.fit_transform(df_encoded['company_location'])
 
     # 训练线性回归模型
@@ -108,12 +111,13 @@ def load_and_preprocess_data():
         '回归系数': model.coef_
     }).sort_values('回归系数', ascending=False)
 
+    # ✨ 核心修复 3：确保 return 出来的变量数量（14个）和内容完全正确
     return df, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2, \
-           model, le_experience, le_employment, le_company, le_location, location_list
-# 加载数据
-df_raw, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2_score_val, \
-model, le_experience, le_employment, le_company, le_location = load_and_preprocess_data()
+           model, exp_map, le_employment, size_map, le_location
 
+# ✨ 核心修复 4：确保外部接收（解包）的变量名字、数量与 return 完美一一对应！
+df_raw, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2_score_val, \
+model, exp_map, le_employment, size_map, le_location = load_and_preprocess_data()
 # ===================== 页面标题 & 侧边导航 =====================
 st.title("💰 数据分析师薪资分析与预测综合平台")
 st.markdown("""
