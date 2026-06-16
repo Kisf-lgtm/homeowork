@@ -3,30 +3,33 @@ import joblib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-# 新增字体模块
 from matplotlib.font_manager import FontProperties
 from sklearn.preprocessing import LabelEncoder
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 import os
 
-# ========= 关键：适配云端Linux内置中文字体 =========
-# 云端专用开源中文字体，本地Windows会自动兼容忽略
-chinese_font = FontProperties(family=["WenQuanYi Zen Hei"])
+# ========= 修复：云端Linux / 本地Windows 双环境中文字体适配 =========
+try:
+    # Streamlit云端Linux：文泉驿正黑（平台自带安装后可用）
+    plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei']
+    chinese_font = FontProperties(fname="/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc")
+except:
+    # 本地Windows兜底字体
+    plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei']
+    chinese_font = FontProperties(family="SimHei")
 
-# ===================== 全局基础配置 =====================
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'WenQuanYi Zen Hei', 'Heiti TC']
+# 解决负号显示方块问题
 plt.rcParams['axes.unicode_minus'] = False
+
+# 页面全局配置
 st.set_page_config(
     page_title="数据分析师薪资预测系统",
     page_icon="💰",
     layout="wide"
 )
 
-# ========== 请务必修改为你本地CSV真实路径 ==========
-# 原来错误写法
-# CSV_PATH = r"C:\Users\mao16\Desktop\案例报告数据\数据分析师工资.csv"
-# 修改为云端可用写法
+# CSV文件路径
 CSV_PATH = "数据分析师工资.csv"
 
 # 分类字段中英文映射
@@ -37,7 +40,7 @@ rev_exp = {v: k for k, v in exp_dict.items()}
 rev_emp = {v: k for k, v in emp_dict.items()}
 rev_size = {v: k for k, v in size_dict.items()}
 
-# ===================== 缓存数据与模型（仅加载一次） =====================
+# ===================== 缓存数据与建模函数 =====================
 @st.cache_data
 def load_and_preprocess_data():
     """加载数据、预处理、建模、统计分组（含地区）"""
@@ -52,7 +55,7 @@ def load_and_preprocess_data():
     upper_bound = Q3 + 1.5 * IQR
     df_clean = df_clean[(df_clean['salary_in_usd'] >= lower_bound) & (df_clean['salary_in_usd'] <= upper_bound)]
 
-    # 标签编码（加入地区编码）
+    # 标签编码
     le_experience = LabelEncoder()
     le_employment = LabelEncoder()
     le_company = LabelEncoder()
@@ -64,7 +67,7 @@ def load_and_preprocess_data():
     df_encoded['company_size'] = le_company.fit_transform(df_encoded['company_size'])
     df_encoded['company_location'] = le_location.fit_transform(df_encoded['company_location'])
 
-    # 训练线性回归模型（特征加入地区）
+    # 训练线性回归模型
     feature_cols = ['work_year', 'experience_level', 'employment_type', 'remote_ratio', 'company_size', 'company_location']
     X = df_encoded[feature_cols]
     y = df_encoded['salary_in_usd']
@@ -72,13 +75,6 @@ def load_and_preprocess_data():
     model.fit(X, y)
     y_pred = model.predict(X)
     r2 = r2_score(y, y_pred)
-
-
-# joblib.dump(model, "salary_prediction_model.pkl")
-# joblib.dump(le_experience, "experience_level_label_encoder.pkl")
-# joblib.dump(le_employment, "employment_type_label_encoder.pkl")
-# joblib.dump(le_company, "company_size_label_encoder.pkl")
-# joblib.dump(le_location, "location_label_encoder.pkl")
 
     # 多维度分组统计
     exp_order = ['EN', 'MI', 'SE', 'EX']
@@ -103,7 +99,6 @@ def load_and_preprocess_data():
         样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
     ).reset_index().sort_values('remote_ratio')
 
-    # 新增地区分组统计
     location_group = df_clean.groupby('company_location')['salary_in_usd'].agg(
         样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
     ).reset_index().sort_values('平均薪资', ascending=False)
@@ -116,11 +111,11 @@ def load_and_preprocess_data():
     return df, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2, \
            model, le_experience, le_employment, le_company, le_location
 
-# 执行数据加载
+# 加载数据
 df_raw, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2_score_val, \
 model, le_experience, le_employment, le_company, le_location = load_and_preprocess_data()
 
-# ===================== 页面主标题 & 侧边导航 =====================
+# ===================== 页面标题 & 侧边导航 =====================
 st.title("💰 数据分析师薪资分析与预测综合平台")
 st.markdown("""
 本平台集成**项目说明、数据集介绍、统计分析、可视化图表、回归建模、薪资预测**全流程功能，
@@ -139,7 +134,7 @@ menu = st.sidebar.radio(
     ]
 )
 
-# ===================== 1. 项目分析目标与预期结果 =====================
+# ===================== 1. 项目分析目标与预期 =====================
 if menu == "一、项目分析目标与预期":
     st.header("2.2 数据分析目标与预期结果")
     st.subheader("核心分析目标")
@@ -164,7 +159,6 @@ elif menu == "二、数据集背景介绍":
 本次分析使用**全球数据分析师薪资数据集**，原始数据共 3755 条样本，覆盖 2020-2023 年，包含 11 个核心字段。
 """)
 
-    # 字段说明表格（补充地区字段）
     field_data = [
         ["work_year", "数值型", "数据对应的工作年份，取值 2020/2021/2022/2023"],
         ["experience_level", "分类型", "工作经验水平：EN 入门、MI 中级、SE 高级、EX 专家"],
@@ -215,19 +209,21 @@ elif menu == "三、数据总览与统计报表":
     st.subheader("6. 线性回归特征影响系数（影响权重排序）")
     st.dataframe(reg_result, use_container_width=True)
 
-# ===================== 4. 可视化图表 + 对应解读 =====================
+# ===================== 4. 可视化图表（全部修复中文字体） =====================
 elif menu == "四、可视化图表与解读":
     st.header("📷 数据可视化图表及详细说明")
     exp_order = ['EN', 'MI', 'SE', 'EX']
 
-    # 图表1
+    # 图表1：薪资分布直方图
     st.subheader("图表1：薪资分布直方图")
     fig1, ax1 = plt.subplots(figsize=(12, 6))
     ax1.hist(df_clean['salary_in_usd'], bins=30, edgecolor='black', color='#0070C0', alpha=0.7)
-    ax1.set_title('数据分析师薪资分布（美元）')
-    ax1.set_xlabel('薪资(美元)')
-    ax1.set_ylabel('样本数量')
+    ax1.set_title('数据分析师薪资分布（美元）', fontproperties=chinese_font, fontsize=14)
+    ax1.set_xlabel('薪资(美元)', fontproperties=chinese_font, fontsize=12)
+    ax1.set_ylabel('样本数量', fontproperties=chinese_font, fontsize=12)
     ax1.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.setp(ax1.get_xticklabels(), fontproperties=chinese_font)
+    plt.setp(ax1.get_yticklabels(), fontproperties=chinese_font)
     st.pyplot(fig1)
     st.info("""
 **图表说明**：数据分析师薪资整体呈近似正态分布，大部分样本薪资集中在 5 万 - 20 万美元区间，
@@ -235,15 +231,17 @@ elif menu == "四、可视化图表与解读":
 """)
     st.divider()
 
-    # 图表2
+    # 图表2：经验水平箱线图
     st.subheader("图表2：不同经验水平薪资箱线图")
     fig2, ax2 = plt.subplots(figsize=(12, 6))
     box_data = [df_clean[df_clean['experience_level'] == level]['salary_in_usd'] for level in exp_order]
-    ax2.boxplot(box_data, tick_labels=exp_order, patch_artist=True, boxprops=dict(facecolor='#0070C0', alpha=0.7))
-    ax2.set_title('不同经验水平薪资箱线图')
-    ax2.set_xlabel('经验等级(EN入门 / MI中级 / SE高级 / EX专家)')
-    ax2.set_ylabel('薪资(美元)')
+    box = ax2.boxplot(box_data, tick_labels=exp_order, patch_artist=True, boxprops=dict(facecolor='#0070C0', alpha=0.7))
+    ax2.set_title('不同经验水平薪资箱线图', fontproperties=chinese_font, fontsize=14)
+    ax2.set_xlabel('经验等级(EN入门 / MI中级 / SE高级 / EX专家)', fontproperties=chinese_font, fontsize=12)
+    ax2.set_ylabel('薪资(美元)', fontproperties=chinese_font, fontsize=12)
     ax2.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.setp(ax2.get_xticklabels(), fontproperties=chinese_font)
+    plt.setp(ax2.get_yticklabels(), fontproperties=chinese_font)
     st.pyplot(fig2)
     st.info("""
 **图表说明**：薪资水平与工作经验呈现显著的正相关关系，入门级 (EN) 平均薪资最低，
@@ -251,67 +249,74 @@ elif menu == "四、可视化图表与解读":
 """)
     st.divider()
 
-    # 图表3
+    # 图表3：公司规模柱状图
     st.subheader("图表3：不同公司规模平均薪资柱状图")
     fig4, ax4 = plt.subplots(figsize=(10, 6))
     company_label = ['小型S', '中型M', '大型L']
-    ax4.bar(company_label, size_group['平均薪资'], color='#2E86AB', alpha=0.8)
-    ax4.set_title('不同公司规模平均薪资对比')
-    ax4.set_ylabel('平均薪资(美元)')
+    bars4 = ax4.bar(company_label, size_group['平均薪资'], color='#2E86AB', alpha=0.8)
+    ax4.set_title('不同公司规模平均薪资对比', fontproperties=chinese_font, fontsize=14)
+    ax4.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
     ax4.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.setp(ax4.get_xticklabels(), fontproperties=chinese_font)
+    plt.setp(ax4.get_yticklabels(), fontproperties=chinese_font)
     for idx, val in enumerate(size_group['平均薪资']):
-        ax4.text(idx, val + 2000, f"{int(val)}", ha='center')
+        ax4.text(idx, val + 2000, f"{int(val)}", ha='center', fontproperties=chinese_font)
     st.pyplot(fig4)
     st.info("""
 **图表说明**：公司规模与薪资水平呈正相关，大型公司 (L) 平均薪资高于中小微企业。
 """)
     st.divider()
 
-    # 图表4
+    # 图表4：年度薪资趋势折线图
     st.subheader("图表4：2020-2023年度薪资趋势折线图")
     fig3, ax3 = plt.subplots(figsize=(12, 6))
     ax3.plot(year_group['work_year'], year_group['平均薪资'], marker='o', color='#0070C0', linewidth=2)
-    ax3.set_title('2020-2023 薪资变化趋势')
-    ax3.set_xlabel('年份')
-    ax3.set_ylabel('平均薪资(美元)')
+    ax3.set_title('2020-2023 薪资变化趋势', fontproperties=chinese_font, fontsize=14)
+    ax3.set_xlabel('年份', fontproperties=chinese_font, fontsize=12)
+    ax3.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
     ax3.grid(linestyle='--', alpha=0.7)
+    plt.setp(ax3.get_xticklabels(), fontproperties=chinese_font)
+    plt.setp(ax3.get_yticklabels(), fontproperties=chinese_font)
     for x, y_val in zip(year_group['work_year'], year_group['平均薪资']):
-        ax3.text(x, y_val + 2000, f"{int(y_val)}", ha='center')
+        ax3.text(x, y_val + 2000, f"{int(y_val)}", ha='center', fontproperties=chinese_font)
     st.pyplot(fig3)
     st.info("""
 **图表说明**：2020-2023 年数据分析师平均薪资呈持续上涨趋势，行业发展前景向好。
 """)
     st.divider()
 
-    # 图表5
+    # 图表5：远程模式柱状图
     st.subheader("图表5：不同远程模式平均薪资柱状图")
     fig5, ax5 = plt.subplots(figsize=(10, 6))
     x5 = [0, 1, 2]
     remote_labels = ["无远程(0)", "混合远程(50)", "全远程(100)"]
-    bars = ax5.bar(x5, remote_group['平均薪资'], color='#A23B72', alpha=0.8)
+    bars5 = ax5.bar(x5, remote_group['平均薪资'], color='#A23B72', alpha=0.8)
     ax5.set_xticks(x5)
-    ax5.set_xticklabels(remote_labels)
-    ax5.set_title('不同远程模式平均薪资对比')
-    ax5.set_ylabel('平均薪资(美元)')
+    ax5.set_xticklabels(remote_labels, fontproperties=chinese_font)
+    ax5.set_title('不同远程模式平均薪资对比', fontproperties=chinese_font, fontsize=14)
+    ax5.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
     ax5.grid(axis='y', linestyle='--', alpha=0.7)
-    for bar in bars:
+    plt.setp(ax5.get_yticklabels(), fontproperties=chinese_font)
+    for bar in bars5:
         height = bar.get_height()
-        ax5.text(bar.get_x() + bar.get_width()/2, height + 2000, f"{int(height)}", ha='center')
+        ax5.text(bar.get_x() + bar.get_width()/2, height + 2000, f"{int(height)}", ha='center', fontproperties=chinese_font)
     st.pyplot(fig5)
     st.info("""
 **图表说明**：全远程 (100%) 岗位的平均薪资显著高于无远程 (0%) 和混合远程 (50%) 岗位。
 """)
     st.divider()
 
-    # 图表6
+    # 图表6：Top10高薪地区柱状图
     st.subheader("图表6：Top10高薪地区平均薪资对比")
     fig6, ax6 = plt.subplots(figsize=(12, 6))
     top10_loc = location_group.head(10)
-    ax6.bar(top10_loc['company_location'], top10_loc['平均薪资'], color='#F18F01', alpha=0.8)
-    ax6.set_title('Top10高薪地区平均薪资对比')
-    ax6.set_ylabel('平均薪资(美元)')
+    bars6 = ax6.bar(top10_loc['company_location'], top10_loc['平均薪资'], color='#F18F01', alpha=0.8)
+    ax6.set_title('Top10高薪地区平均薪资对比', fontproperties=chinese_font, fontsize=14)
+    ax6.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
     ax6.tick_params(axis='x', rotation=45)
     ax6.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.setp(ax6.get_xticklabels(), fontproperties=chinese_font)
+    plt.setp(ax6.get_yticklabels(), fontproperties=chinese_font)
     st.pyplot(fig6)
     st.info("""
 **图表说明**：不同地区薪资差异显著，美国、瑞士等发达国家的平均薪资远高于其他地区。
@@ -368,7 +373,7 @@ elif menu == "五、分析结论与行业建议":
 灵活采用远程办公模式，不仅能提升岗位的薪资竞争力，同时能扩大人才招聘的地域范围。
 """)
 
-# ===================== 6. 在线薪资预测工具（含地区） =====================
+# ===================== 6. 在线薪资预测工具 =====================
 elif menu == "六、在线薪资预测工具":
     st.header("🎯 在线薪资预测")
     st.markdown("输入个人及工作信息，智能预测数据分析师税前年薪（美元）")
