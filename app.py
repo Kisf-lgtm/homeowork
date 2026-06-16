@@ -67,12 +67,12 @@ def load_and_preprocess_data():
     y_pred = model.predict(X)
     r2 = r2_score(y, y_pred)
 
-    # 持久化模型与编码器
-    joblib.dump(model, "salary_prediction_model.pkl")
-    joblib.dump(le_experience, "experience_level_label_encoder.pkl")
-    joblib.dump(le_employment, "employment_type_label_encoder.pkl")
-    joblib.dump(le_company, "company_size_label_encoder.pkl")
-    joblib.dump(le_location, "location_label_encoder.pkl")
+
+# joblib.dump(model, "salary_prediction_model.pkl")
+# joblib.dump(le_experience, "experience_level_label_encoder.pkl")
+# joblib.dump(le_employment, "employment_type_label_encoder.pkl")
+# joblib.dump(le_company, "company_size_label_encoder.pkl")
+# joblib.dump(le_location, "location_label_encoder.pkl")
 
     # 多维度分组统计
     exp_order = ['EN', 'MI', 'SE', 'EX']
