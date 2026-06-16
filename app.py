@@ -3,10 +3,16 @@ import joblib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+# 新增字体模块
+from matplotlib.font_manager import FontProperties
 from sklearn.preprocessing import LabelEncoder
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 import os
+
+# ========= 关键：适配云端Linux内置中文字体 =========
+# 云端专用开源中文字体，本地Windows会自动兼容忽略
+chinese_font = FontProperties(family=["WenQuanYi Zen Hei"])
 
 # ===================== 全局基础配置 =====================
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'WenQuanYi Zen Hei', 'Heiti TC']
