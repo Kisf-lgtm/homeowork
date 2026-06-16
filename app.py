@@ -371,7 +371,7 @@ elif menu == "五、分析结论与行业建议":
 灵活采用远程办公模式，不仅能提升岗位的薪资竞争力，同时能扩大人才招聘的地域范围。
 """)
 
-# ===================== 6. 在线薪资预测工具 =====================
+# ===================== 六、在线薪资预测工具 =====================
 elif menu == "六、在线薪资预测工具":
     st.header("🧮 在线薪资预测")
     st.markdown("输入个人及工作信息，智能预测数据分析师税前年薪（美元）")
@@ -379,34 +379,37 @@ elif menu == "六、在线薪资预测工具":
     with st.form("salary_prediction_form"):
         col1, col2 = st.columns(2)
         with col1:
-            work_year = st.slider("工作年份", min_value=2020, max_value=2025, value=2023, step=1)
-            exp_cn = [exp_dict[item] for item in le_experience.classes_]
-            experience_cn = st.selectbox("工作经验水平", options=exp_cn)
+            work_year = st.slider("工作年份", min_value=2020, max_value=2026, value=2024, step=1)
+            # 修复：直接从我们的全局字典拿到中文选项
+            experience_cn = st.selectbox("工作经验水平", options=list(exp_dict.values()))
             emp_cn = [emp_dict[item] for item in le_employment.classes_]
             employment_cn = st.selectbox("雇佣类型", options=emp_cn)
 
         with col2:
             remote_ratio = st.select_slider("远程工作比例", options=[0, 50, 100], value=100, format_func=lambda x: f"{x}%")
-            size_cn = [size_dict[item] for item in le_company.classes_]
-            company_cn = st.selectbox("公司规模", options=size_cn)
+            company_cn = st.selectbox("公司规模", options=list(size_dict.values()))
             location = st.selectbox("公司所在国家/地区", options=le_location.classes_)
 
         submit = st.form_submit_button("开始预测薪资", use_container_width=True)
 
     if submit:
+        # 1. 逆向推导原始缩写 (如 "高级(5-10年)" -> "SE")
         exp_raw = rev_exp[experience_cn]
         emp_raw = rev_emp[employment_cn]
         size_raw = rev_size[company_cn]
 
-        exp_code = le_experience.transform([exp_raw])[0]
+        # 2. 修复：使用正确的映射和编码转换为数值
+        exp_code = exp_map[exp_raw]          # 使用手动字典映射
+        com_code = size_map[size_raw]        # 使用手动字典映射
         emp_code = le_employment.transform([emp_raw])[0]
-        com_code = le_company.transform([size_raw])[0]
         loc_code = le_location.transform([location])[0]
 
         input_features = np.array([[work_year, exp_code, emp_code, remote_ratio, com_code, loc_code]])
         predicted_salary = model.predict(input_features)[0]
 
         st.success("✅ 预测完成！")
+        # 兜底避免线性回归模型在极端极端情况下预测出负数薪资
+        predicted_salary = max(0, predicted_salary)
         st.metric(label="预测税前年薪（美元）", value=f"${predicted_salary:,.2f}")
 
         st.info("""
