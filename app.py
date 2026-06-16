@@ -220,13 +220,13 @@ elif menu == "四、可视化图表与解读":
     st.header("📷 数据可视化图表及详细说明")
     exp_order = ['EN', 'MI', 'SE', 'EX']
 
-    # 图表1
+    # 图表1：薪资分布直方图
     st.subheader("图表1：薪资分布直方图")
     fig1, ax1 = plt.subplots(figsize=(12, 6))
     ax1.hist(df_clean['salary_in_usd'], bins=30, edgecolor='black', color='#0070C0', alpha=0.7)
-    ax1.set_title('数据分析师薪资分布（美元）')
-    ax1.set_xlabel('薪资(美元)')
-    ax1.set_ylabel('样本数量')
+    ax1.set_title('数据分析师薪资分布（美元）', fontproperties=chinese_font, fontsize=14)
+    ax1.set_xlabel('薪资(美元)', fontproperties=chinese_font, fontsize=12)
+    ax1.set_ylabel('样本数量', fontproperties=chinese_font, fontsize=12)
     ax1.grid(axis='y', linestyle='--', alpha=0.7)
     st.pyplot(fig1)
     st.info("""
@@ -235,14 +235,14 @@ elif menu == "四、可视化图表与解读":
 """)
     st.divider()
 
-    # 图表2
+    # 图表2：不同经验水平薪资箱线图
     st.subheader("图表2：不同经验水平薪资箱线图")
     fig2, ax2 = plt.subplots(figsize=(12, 6))
     box_data = [df_clean[df_clean['experience_level'] == level]['salary_in_usd'] for level in exp_order]
     ax2.boxplot(box_data, tick_labels=exp_order, patch_artist=True, boxprops=dict(facecolor='#0070C0', alpha=0.7))
-    ax2.set_title('不同经验水平薪资箱线图')
-    ax2.set_xlabel('经验等级(EN入门 / MI中级 / SE高级 / EX专家)')
-    ax2.set_ylabel('薪资(美元)')
+    ax2.set_title('不同经验水平薪资箱线图', fontproperties=chinese_font, fontsize=14)
+    ax2.set_xlabel('经验等级(EN入门 / MI中级 / SE高级 / EX专家)', fontproperties=chinese_font, fontsize=12)
+    ax2.set_ylabel('薪资(美元)', fontproperties=chinese_font, fontsize=12)
     ax2.grid(axis='y', linestyle='--', alpha=0.7)
     st.pyplot(fig2)
     st.info("""
@@ -252,16 +252,16 @@ elif menu == "四、可视化图表与解读":
 """)
     st.divider()
 
-    # 图表3
+    # 图表3：不同公司规模平均薪资柱状图
     st.subheader("图表3：不同公司规模平均薪资柱状图")
     fig4, ax4 = plt.subplots(figsize=(10, 6))
     company_label = ['小型S', '中型M', '大型L']
     ax4.bar(company_label, size_group['平均薪资'], color='#2E86AB', alpha=0.8)
-    ax4.set_title('不同公司规模平均薪资对比')
-    ax4.set_ylabel('平均薪资(美元)')
-    ax4.grid(axis='y', linestyle='--', alpha=0.7)
+    ax4.set_title('不同公司规模平均薪资对比', fontproperties=chinese_font, fontsize=14)
+    ax4.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
+    ax4.grid(axis='y', linestyle='--', alpha=0.8)
     for idx, val in enumerate(size_group['平均薪资']):
-        ax4.text(idx, val + 2000, f"{int(val)}", ha='center')
+        ax4.text(idx, val + 2000, f"{int(val)}", ha='center', fontproperties=chinese_font)
     st.pyplot(fig4)
     st.info("""
 **图表说明**：公司规模与薪资水平呈正相关，大型公司 (L) 平均薪资约 14.5 万美元，
@@ -270,16 +270,16 @@ elif menu == "四、可视化图表与解读":
 """)
     st.divider()
 
-    # 图表4
+    # 图表4：2020-2023年度薪资趋势折线图
     st.subheader("图表4：2020-2023年度薪资趋势折线图")
     fig3, ax3 = plt.subplots(figsize=(12, 6))
     ax3.plot(year_group['work_year'], year_group['平均薪资'], marker='o', color='#0070C0', linewidth=2)
-    ax3.set_title('2020-2023 薪资变化趋势')
-    ax3.set_xlabel('年份')
-    ax3.set_ylabel('平均薪资(美元)')
+    ax3.set_title('2020-2023 薪资变化趋势', fontproperties=chinese_font, fontsize=14)
+    ax3.set_xlabel('年份', fontproperties=chinese_font, fontsize=12)
+    ax3.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
     ax3.grid(linestyle='--', alpha=0.7)
     for x, y_val in zip(year_group['work_year'], year_group['平均薪资']):
-        ax3.text(x, y_val + 2000, f"{int(y_val)}", ha='center')
+        ax3.text(x, y_val + 2000, f"{int(y_val)}", ha='center', fontproperties=chinese_font)
     st.pyplot(fig3)
     st.info("""
 **图表说明**：2020-2023 年数据分析师平均薪资呈持续上涨趋势，
@@ -288,7 +288,7 @@ elif menu == "四、可视化图表与解读":
 """)
     st.divider()
 
-    # 图表5
+    # 图表5：不同远程模式平均薪资柱状图
     st.subheader("图表5：不同远程模式平均薪资柱状图")
     fig5, ax5 = plt.subplots(figsize=(10, 6))
     x5 = [0, 1, 2]
@@ -296,12 +296,12 @@ elif menu == "四、可视化图表与解读":
     bars = ax5.bar(x5, remote_group['平均薪资'], color='#A23B72', alpha=0.8)
     ax5.set_xticks(x5)
     ax5.set_xticklabels(remote_labels)
-    ax5.set_title('不同远程模式平均薪资对比')
-    ax5.set_ylabel('平均薪资(美元)')
+    ax5.set_title('不同远程模式平均薪资对比', fontproperties=chinese_font, fontsize=14)
+    ax5.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
     ax5.grid(axis='y', linestyle='--', alpha=0.7)
     for bar in bars:
         height = bar.get_height()
-        ax5.text(bar.get_x() + bar.get_width()/2, height + 2000, f"{int(height)}", ha='center')
+        ax5.text(bar.get_x() + bar.get_width()/2, height + 2000, f"{int(height)}", ha='center', fontproperties=chinese_font)
     st.pyplot(fig5)
     st.info("""
 **图表说明**：全远程 (100%) 岗位的平均薪资显著高于无远程 (0%) 和混合远程 (50%) 岗位，
@@ -310,13 +310,13 @@ elif menu == "四、可视化图表与解读":
 """)
     st.divider()
 
-    # 图表6：新增地区薪资对比
+    # 图表6：Top10高薪地区平均薪资对比
     st.subheader("图表6：Top10高薪地区平均薪资对比")
     fig6, ax6 = plt.subplots(figsize=(12, 6))
     top10_loc = location_group.head(10)
     ax6.bar(top10_loc['company_location'], top10_loc['平均薪资'], color='#F18F01', alpha=0.8)
-    ax6.set_title('Top10高薪地区平均薪资对比')
-    ax6.set_ylabel('平均薪资(美元)')
+    ax6.set_title('Top10高薪地区平均薪资对比', fontproperties=chinese_font, fontsize=14)
+    ax6.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
     ax6.tick_params(axis='x', rotation=45)
     ax6.grid(axis='y', linestyle='--', alpha=0.7)
     st.pyplot(fig6)
