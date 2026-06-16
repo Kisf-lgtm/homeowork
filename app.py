@@ -180,8 +180,6 @@ elif menu == "三、数据总览与统计报表":
     with col1:
         st.metric("原始数据总量", f"{len(df_raw)} 条")
         st.metric("清洗后有效数据", f"{len(df_clean)} 条")
-    with col2:
-        st.metric("模型决定系数 R²", f"{r2_score_val:.4f}")
 
     st.subheader("原始数据前10行")
     st.dataframe(df_raw.head(10), use_container_width=True)
