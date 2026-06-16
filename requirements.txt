@@ -1,6 +1,7 @@
-streamlit==1.38.0
-pandas==2.1.4
-numpy==1.26.2
-matplotlib==3.8.2
-scikit-learn==1.3.2
-joblib==1.3.2
+# 仅写库名，不指定版本，适配云端Python
+streamlit
+pandas
+numpy
+matplotlib
+scikit-learn
+joblib
