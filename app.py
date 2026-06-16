@@ -110,7 +110,6 @@ def load_and_preprocess_data():
 
     return df, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2, \
            model, exp_map, le_employment, size_map, le_location
-
 # 加载数据
 df_raw, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2_score_val, \
 model, le_experience, le_employment, le_company, le_location = load_and_preprocess_data()
