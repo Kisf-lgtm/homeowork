@@ -9,7 +9,7 @@ from sklearn.metrics import r2_score
 import os
 
 # ===================== 全局基础配置 =====================
-plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Heiti TC']
 plt.rcParams['axes.unicode_minus'] = False
 st.set_page_config(
     page_title="数据分析师薪资预测系统",
