@@ -109,7 +109,7 @@ def load_and_preprocess_data():
     }).sort_values('回归系数', ascending=False)
 
     return df, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2, \
-           model, le_experience, le_employment, le_company, le_location
+           model, exp_map, le_employment, size_map, le_location
 
 # 加载数据
 df_raw, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2_score_val, \
