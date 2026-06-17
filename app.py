@@ -44,7 +44,6 @@ rev_size = {v: k for k, v in size_dict.items()}
 @st.cache_data
 def load_and_preprocess_data():
     """加载数据、预处理、建模、统计分组"""
-    # 建立兜底空数据，防止文件不存在时白屏
     try:
         df = pd.read_csv(CSV_PATH)
     except Exception as e:
@@ -83,23 +82,11 @@ def load_and_preprocess_data():
     y_pred = model.predict(X)
     r2 = r2_score(y, y_pred)
 
-    # 多维度分组统计
-    exp_order = ['EN', 'MI', 'SE', 'EX']
+    # 严格排查和对齐每一组聚合计算的闭合括号
     exp_group = df_clean.groupby('experience_level')['salary_in_usd'].agg(
         样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
     ).reset_index()
+    
+    exp_order = ['EN', 'MI', 'SE', 'EX']
     exp_group['experience_level'] = pd.Categorical(exp_group['experience_level'], categories=exp_order, ordered=True)
-    exp_group = exp_group.sort_values('experience_level')
-
-    size_order = ['S', 'M', 'L']
-    size_group = df_clean.groupby('company_size')['salary_in_usd'].agg(
-        样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
-    ).reset_index()
-    size_group['company_size'] = pd.Categorical(size_group['company_size'], categories=size_order, ordered=True)
-    size_group = size_group.sort_values('company_size')
-
-    # 映射中文名
-    size_group['company_size_cn'] = size_group['company_size'].map({"S": "小型企业(S)", "M": "中型企业(M)", "L": "大型企业(L)"})
-
-    year_group = df_clean.groupby('work_year')['salary_in_usd'].agg(
-        样本量='count', 平均薪资
+    exp_group = exp_group
