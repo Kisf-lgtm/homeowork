@@ -82,4 +82,39 @@ def load_and_preprocess_data():
     exp_group = df_clean.groupby('experience_level')['salary_in_usd'].agg(
         样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
     ).reset_index()
-    exp_group['experience_level'] = pd
+    exp_group['experience_level'] = pd.Categorical(exp_group['experience_level'], categories=exp_order, ordered=True)
+    exp_group = exp_group.sort_values('experience_level')
+
+    size_order = ['S', 'M', 'L']
+    size_group = df_clean.groupby('company_size')['salary_in_usd'].agg(
+        样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
+    ).reset_index()
+    size_group['company_size'] = pd.Categorical(size_group['company_size'], categories=size_order, ordered=True)
+    size_group = size_group.sort_values('company_size')
+
+    # 将英文规模标签替换为可读中文
+    size_group['company_size_cn'] = size_group['company_size'].map({"S": "小型企业(S)", "M": "中型企业(M)", "L": "大型企业(L)"})
+
+    year_group = df_clean.groupby('work_year')['salary_in_usd'].agg(
+        样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
+    ).reset_index().sort_values('work_year')
+
+    remote_group = df_clean.groupby('remote_ratio')['salary_in_usd'].agg(
+        样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
+    ).reset_index().sort_values('remote_ratio')
+
+    location_group = df_clean.groupby('company_location')['salary_in_usd'].agg(
+        样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
+    ).reset_index().sort_values('平均薪资', ascending=False)
+
+    reg_result = pd.DataFrame({
+        '特征': ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模', '公司所在地区'],
+        '回归系数': model.coef_
+    }).sort_values('回归系数', ascending=False)
+
+    return df, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2, \
+           model, exp_map, le_employment, size_map, le_location
+
+# 解包变量
+df_raw, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2_score_val, \
+model, exp_map, le_employment, size_map, le_location = load_and_preprocess
