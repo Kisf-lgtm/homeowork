@@ -1,26 +1,26 @@
 import streamlit as st
-import joblib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.font_manager import FontProperties
 from sklearn.preprocessing import LabelEncoder
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
-import os
 
-# ========= 修复：云端Linux / 本地Windows 双环境中文字体适配 =========
-try:
-    # Streamlit云端Linux：文泉驿正黑（平台自带安装后可用）
-    plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei']
-    chinese_font = FontProperties(fname="/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc")
-except:
-    # 本地Windows兜底字体
-    plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei']
-    chinese_font = FontProperties(family="SimHei")
+# ===================== 🛡️ 彻底修复：字体与图形死锁防御 =====================
+plt.rcParams['axes.unicode_minus'] = False  # 正常显示负号
 
-# 解决负号显示方块问题
-plt.rcParams['axes.unicode_minus'] = False
+# 自动寻找系统内可用中文黑体，找不到则安全降级，防止云端环境因为字体加载而白屏
+supported_fonts = ['SimHei', 'Microsoft YaHei', 'WenQuanYi Zen Hei', 'DejaVu Sans', 'sans-serif']
+for font in supported_fonts:
+    try:
+        plt.rcParams['font.sans-serif'] = [font]
+        # 测试绘图是否会崩溃
+        fig, ax = plt.subplots()
+        ax.text(0.5, 0.5, 'test')
+        plt.close(fig)
+        break
+    except:
+        continue
 
 # 页面全局配置
 st.set_page_config(
@@ -43,8 +43,14 @@ rev_size = {v: k for k, v in size_dict.items()}
 # ===================== 缓存数据与建模函数 =====================
 @st.cache_data
 def load_and_preprocess_data():
-    """加载数据、预处理、建模、统计分组（含地区）"""
-    df = pd.read_csv(CSV_PATH)
+    """加载数据、预处理、建模、统计分组"""
+    # 建立兜底空数据，防止文件不存在时白屏
+    try:
+        df = pd.read_csv(CSV_PATH)
+    except Exception as e:
+        st.error(f"⚠️ 无法读取数据源文件 '{CSV_PATH}'，请检查文件是否存在！错误信息: {e}")
+        st.stop()
+
     df_clean = df.copy()
 
     # IQR剔除薪资异常值
@@ -66,4 +72,34 @@ def load_and_preprocess_data():
     df_encoded['experience_level'] = df_encoded['experience_level'].map(exp_map)
     df_encoded['company_size'] = df_encoded['company_size'].map(size_map)
     df_encoded['employment_type'] = le_employment.fit_transform(df_encoded['employment_type'])
-    df_
+    df_encoded['company_location'] = le_location.fit_transform(df_encoded['company_location'])
+
+    # 训练线性回归模型
+    feature_cols = ['work_year', 'experience_level', 'employment_type', 'remote_ratio', 'company_size', 'company_location']
+    X = df_encoded[feature_cols]
+    y = df_encoded['salary_in_usd']
+    model = LinearRegression()
+    model.fit(X, y)
+    y_pred = model.predict(X)
+    r2 = r2_score(y, y_pred)
+
+    # 多维度分组统计
+    exp_order = ['EN', 'MI', 'SE', 'EX']
+    exp_group = df_clean.groupby('experience_level')['salary_in_usd'].agg(
+        样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
+    ).reset_index()
+    exp_group['experience_level'] = pd.Categorical(exp_group['experience_level'], categories=exp_order, ordered=True)
+    exp_group = exp_group.sort_values('experience_level')
+
+    size_order = ['S', 'M', 'L']
+    size_group = df_clean.groupby('company_size')['salary_in_usd'].agg(
+        样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
+    ).reset_index()
+    size_group['company_size'] = pd.Categorical(size_group['company_size'], categories=size_order, ordered=True)
+    size_group = size_group.sort_values('company_size')
+
+    # 映射中文名
+    size_group['company_size_cn'] = size_group['company_size'].map({"S": "小型企业(S)", "M": "中型企业(M)", "L": "大型企业(L)"})
+
+    year_group = df_clean.groupby('work_year')['salary_in_usd'].agg(
+        样本量='count', 平均薪资
