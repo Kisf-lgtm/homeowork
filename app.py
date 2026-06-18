@@ -382,37 +382,37 @@ elif menu == "五、高级可视化分析":
 **核心洞察**：经验水平和薪资相关系数最高(0.62)，无严重多重共线性，回归模型可靠。
 """)
 
-st.divider()
-st.subheader("高级图表2：不同薪资分位数的特征影响系数对比（横向分组条形图）")
-fig_qr, ax_qr = plt.subplots(figsize=(12, 7))
+    st.divider()
+    st.subheader("高级图表2：不同薪资分位数的特征影响系数对比（横向分组条形图）")
+    fig_qr, ax_qr = plt.subplots(figsize=(12, 7))
 
 # 数据准备
-features = qr_result['特征'].tolist()
-q25 = qr_result['25%分位数系数'].tolist()
-q50 = qr_result['50%分位数系数'].tolist()
-q75 = qr_result['75%分位数系数'].tolist()
+    features = qr_result['特征'].tolist()
+    q25 = qr_result['25%分位数系数'].tolist()
+    q50 = qr_result['50%分位数系数'].tolist()
+    q75 = qr_result['75%分位数系数'].tolist()
 
-y = np.arange(len(features))
-height = 0.25
+    y = np.arange(len(features))
+    height = 0.25
 
 # 横向分组条形
-ax_qr.barh(y - height, q25, height, label='25%低薪分位数', color='#1f77b4')
-ax_qr.barh(y, q50, height, label='50%中等薪资分位数', color='#ff7f0e')
-ax_qr.barh(y + height, q75, height, label='75%高薪分位数', color='#2ca02c')
+    ax_qr.barh(y - height, q25, height, label='25%低薪分位数', color='#1f77b4')
+    ax_qr.barh(y, q50, height, label='50%中等薪资分位数', color='#ff7f0e')
+    ax_qr.barh(y + height, q75, height, label='75%高薪分位数', color='#2ca02c')
 
 # 坐标轴设置
-ax_qr.set_yticks(y)
-ax_qr.set_yticklabels(features, fontproperties=chinese_font)
-ax_qr.set_xlabel('回归系数（数值越大正向提升薪资，负数压低薪资）', fontproperties=chinese_font, fontsize=12)
-ax_qr.set_title('各特征在不同薪资分位数下的回归系数对比', fontproperties=chinese_font, fontsize=16)
-ax_qr.axvline(x=0, color='black', linestyle='--', alpha=0.8, label='无影响基准线')
-ax_qr.legend(prop=chinese_font)
-ax_qr.grid(axis='x', linestyle='--', alpha=0.5)
+    ax_qr.set_yticks(y)
+    ax_qr.set_yticklabels(features, fontproperties=chinese_font)
+    ax_qr.set_xlabel('回归系数（数值越大正向提升薪资，负数压低薪资）', fontproperties=chinese_font, fontsize=12)
+    ax_qr.set_title('各特征在不同薪资分位数下的回归系数对比', fontproperties=chinese_font, fontsize=16)
+    ax_qr.axvline(x=0, color='black', linestyle='--', alpha=0.8, label='无影响基准线')
+    ax_qr.legend(prop=chinese_font)
+    ax_qr.grid(axis='x', linestyle='--', alpha=0.5)
 
 # 自适应横轴，自动展示负系数和极小值
-ax_qr.autoscale(axis='x')
-st.pyplot(fig_qr)
-st.dataframe(qr_result, use_container_width=True)
+    ax_qr.autoscale(axis='x')
+    st.pyplot(fig_qr)
+    st.dataframe(qr_result, use_container_width=True)
 
     st.divider()
     st.subheader("高级图表3：带95%置信区间年度薪资趋势")
