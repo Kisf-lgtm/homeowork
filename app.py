@@ -398,6 +398,7 @@ elif menu == "五、高级可视化分析":
     ax_qr.axhline(y=0, color='black', linestyle='--')
     ax_qr.legend(prop=chinese_font)
     ax_qr.grid(axis='y', alpha=0.5, linestyle='--')
+    ax_qr.set_ylim(-200, 1800)
     st.pyplot(fig_qr)
 
     st.divider()
