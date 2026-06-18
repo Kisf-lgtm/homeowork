@@ -378,9 +378,7 @@ elif menu == "五、高级可视化分析":
             text = ax_corr.text(j, i, f"{corr_matrix.iloc[i,j]:.2f}", ha="center", va="center", fontproperties=chinese_font, color="black")
     fig_corr.colorbar(im, ax=ax_corr)
     st.pyplot(fig_corr)
-    st.info("""
-**核心洞察**：经验水平和薪资相关系数最高(0.62)，无严重多重共线性，回归模型可靠。
-""")
+    
 
     st.divider()
     st.subheader("高级图表2：不同薪资分位数的特征影响系数对比（横向分组条形图）")
