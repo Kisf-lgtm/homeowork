@@ -151,16 +151,17 @@ if menu == "1.Project Objective":
 elif menu == "2.Dataset Intro":
     st.header("Dataset Background")
     st.markdown("Raw data contains 3755 records from 2020 to 2023 with 11 columns")
+    # 修复：所有描述字符串添加成对双引号，消除未闭合报错
     field_data = [
         ["work_year", "numeric", "year of data, support predict to 2026"],
-        ["experience_level", "category", "EN/MI/SE/EX"],
-        ["employment_type", "category", "FT/CT/PT/FL"],
-        ["job_title", "category", "93 kinds of data jobs"],
-        ["salary_in_usd", "numeric", target salary in USD"],
-        ["remote_ratio", "numeric", 0/50/100 remote mode"],
-        ["company_size", "category", S/M/L scale"],
-        ["company_location", "category", company country/region"],
-        ["employee_residence", "category", staff residence country/region"]
+        ["experience_level", "category", "EN/MI/SE/EX four experience grade"],
+        ["employment_type", "category", "FT/CT/PT/FL work type"],
+        ["job_title", "category", "93 kinds of data related jobs"],
+        ["salary_in_usd", "numeric", "target salary converted to USD"],
+        ["remote_ratio", "numeric", "0/50/100 remote work proportion"],
+        ["company_size", "category", "S small/M medium/L large enterprise"],
+        ["company_location", "category", "country of company"],
+        ["employee_residence", "category", "country of employee"]
     ]
     df_field = pd.DataFrame(field_data, columns=["Column Name", "Type", "Description"])
     st.dataframe(df_field, use_container_width=True, hide_index=True)
@@ -198,9 +199,9 @@ elif menu == "4.Visualization":
     # Salary hist
     fig1, ax1 = plt.subplots(figsize=(12, 6))
     ax1.hist(df_clean['salary_in_usd'], bins=30, edgecolor='black', color='#0070C0', alpha=0.7)
-    ax1.set_title("Salary Distribution(USD)", fontproperties=chinese_font)
-    ax1.set_xlabel("Annual Salary USD", fontproperties=chinese_font)
-    ax1.set_ylabel("Record Count", fontproperties=chinese_font)
+    ax1.set_title('Salary Distribution(USD)', fontproperties=chinese_font)
+    ax1.set_xlabel('Annual Salary USD', fontproperties=chinese_font)
+    ax1.set_ylabel('Record Count', fontproperties=chinese_font)
     ax1.grid(axis='y', linestyle='--', alpha=0.7)
     st.pyplot(fig1)
     st.info("Salary mainly distributed between 50000-200000 USD, approximate normal distribution")
@@ -224,7 +225,7 @@ elif menu == "4.Visualization":
     ax4.set_title("Avg Salary By Company Scale", fontproperties=chinese_font)
     ax4.set_ylabel("Average Salary USD", fontproperties=chinese_font)
     st.pyplot(fig4)
-    st.info("Medium companies offer higher average salary than large ones")
+    st.info("Medium companies offer higher average salary than large companies")
     st.divider()
     # Year trend
     fig3, ax3 = plt.subplots(figsize=(12, 6))
@@ -239,7 +240,7 @@ elif menu == "4.Visualization":
     st.divider()
     # Remote mode
     fig5, ax5 = plt.subplots(figsize=(10, 6))
-    x5 = [0,1,2]
+    x5 = [0, 1, 2]
     remote_labels = ["On-site(0)","Hybrid(50)","Full Remote(100)"]
     bars5 = ax5.bar(x5, remote_group['mean_salary'], color='#A23B72', alpha=0.8)
     ax5.set_xticks(x5)
@@ -247,9 +248,9 @@ elif menu == "4.Visualization":
     for bar in bars5:
         h = bar.get_height()
         ax5.text(bar.get_x()+bar.get_width()/2, h+2000, f"{int(h)}", ha='center', fontproperties=chinese_font)
-    ax5.set_title("Avg Salary By Remote Mode", fontproperties=chinese_font)
+    ax5.set_title("Remote Mode Salary Comparison", fontproperties=chinese_font)
     st.pyplot(fig5)
-    st.info("On-site and full remote jobs have higher salary than hybrid")
+    st.info("On-site and full remote salary higher than hybrid posts")
     st.divider()
     # Top10 region
     fig6, ax6 = plt.subplots(figsize=(12, 6))
@@ -259,36 +260,36 @@ elif menu == "4.Visualization":
     ax6.set_title("Top10 High Salary Regions", fontproperties=chinese_font)
     ax6.set_ylabel("Average Salary USD", fontproperties=chinese_font)
     st.pyplot(fig6)
-    st.info("European and American regions have obvious salary advantages")
+    st.info("European and American countries have obvious salary advantages")
 
 elif menu == "5.Analysis Conclusion & Suggestion":
     st.header("Analysis Result & Industry Advice")
     st.subheader("Core Conclusion")
     st.markdown("""
-1. Salary trend: keep rising from 2020 to 2023, predict to 2026 is trend extrapolation only
-2. Top factor: work experience has the biggest impact on salary
+1. Salary trend: keep rising from 2020 to 2023, prediction to 2026 is only reference
+2. Top impact factor: work experience is the most important variable
 3. Company scale: Medium > Large > Small average salary
-4. Region: developed countries have much higher pay
-5. Remote: full on-site / full remote better than hybrid
+4. Region gap: developed countries have much higher income
+5. Remote policy: on-site / full remote better than hybrid
 """)
     st.subheader("Advice for Job Seekers")
     st.markdown("""
 1. Accumulate project experience to raise salary quickly
-2. Do not only target large enterprises, medium firms have higher salary premium
+2. Do not only focus on big firms, medium enterprises have higher salary premium
 3. Prioritize on-site or full remote positions
-4. Industry salary growth is stable, long term development is recommended
+4. Data industry has stable upward trend for long-term career
 """)
     st.subheader("Advice for Companies")
     st.markdown("""
-1. Set tiered salary based on experience level
-2. Large companies need to improve base salary to retain talents
-3. Small firms can use stock/ flexible work to compensate low base pay
-4. Differentiate salary standard for remote and on-site roles
+1. Build tiered salary standard based on experience
+2. Large enterprises need to improve base salary to retain core staff
+3. Small companies can use equity and flexible schedule to compensate low pay
+4. Set differentiated salary for remote and offline roles
 """)
 
 elif menu == "6.Salary Predict Tool":
     st.header("Online Salary Predictor")
-    st.markdown("Note: data only covers 2020-2023, 2024-2026 result is trend extrapolation for reference only")
+    st.markdown("Note: data only contains 2020-2023 records, 2024-2026 are trend extrapolation")
     with st.form("predict_form"):
         col1, col2 = st.columns(2)
         with col1:
@@ -323,6 +324,7 @@ elif menu == "6.Salary Predict Tool":
         })
         X_in = preprocessor.transform(input_df)
         pred = model.predict(X_in)[0]
+        # Limit salary to real minimum to avoid zero
         pred = max(pred, min_salary)
         match = df_clean[(df_clean['experience_level']==exp_raw)&
                           (df_clean['company_size']==size_raw)&
@@ -331,16 +333,16 @@ elif menu == "6.Salary Predict Tool":
         st.success("Prediction Complete")
         st.metric("Predicted Annual Salary(USD)", f"${pred:,.2f}")
         if len(match) < 5:
-            st.warning(f"Warning: only {len(match)} records match your input, result low reference value")
+            st.warning(f"Warning: only {len(match)} matched records in dataset, prediction reference value is low")
         else:
-            st.info(f"Matched records:{len(match)}, avg:${match['mean_salary']:.2f}, median:${match['salary_in_usd']:.2f}")
+            st.info(f"Matched records: {len(match)}, average ${match['mean_salary']:.2f}, median ${match['salary_in_usd']:.2f}")
         st.markdown("""
 Tips:
-1. Original data 2020-2023, 2024-2026 extrapolation result is not absolute
-2. Use OneHotEncoder for region/job to avoid wrong weight
-3. Predict floor set to real minimal salary in dataset, no zero salary output
+1. Original dataset only covers 2020-2023
+2. Unordered fields use OneHotEncoder to avoid model bias
+3. Prediction floor set to real minimum salary in dataset, no zero output
 """)
 
 # Footer
 st.markdown("---")
-st.markdown("© 2026 Data Analyst Salary Analysis System | Support prediction from 2020 to 2026")
+st.markdown("© 2026 Data Analyst Salary Analysis System | Support 2020-2026 salary prediction")
