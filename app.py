@@ -382,55 +382,37 @@ elif menu == "五、高级可视化分析":
 **核心洞察**：经验水平和薪资相关系数最高(0.62)，无严重多重共线性，回归模型可靠。
 """)
 
-    st.divider()
-    st.subheader("高级图表2：分位数回归系数小提琴分布图")
-    fig_qr, ax_qr = plt.subplots(figsize=(13,7))
+st.divider()
+st.subheader("高级图表2：不同薪资分位数的特征影响系数对比（横向分组条形图）")
+fig_qr, ax_qr = plt.subplots(figsize=(12, 7))
 
-    # 整理数据，把三组分位数系数合并用于小提琴绘图
-    data_list = [
-        qr_result["25%分位数系数"].values,
-        qr_result["50%分位数系数"].values,
-        qr_result["75%分位数系数"].values
-    ]
-    quantile_labels = ["25%低薪分位数","50%中等薪资分位数","75%高薪分位数"]
+# 数据准备
+features = qr_result['特征'].tolist()
+q25 = qr_result['25%分位数系数'].tolist()
+q50 = qr_result['50%分位数系数'].tolist()
+q75 = qr_result['75%分位数系数'].tolist()
 
-    # matplotlib原生小提琴图
-    parts = ax_qr.violinplot(
-        data_list,
-        showmeans=True,
-        showmedians=True,
-        vert=False,  # 横向小提琴，阅读更舒服
-        positions=[0,1,2]
-    )
+y = np.arange(len(features))
+height = 0.25
 
-    # 配色美化
-    colors = ["#1f77b4","#ff7f0e","#2ca02c"]
-    for idx, pc in enumerate(parts['bodies']):
-        pc.set_facecolor(colors[idx])
-        pc.set_alpha(0.6)
-    # 均值线、中位数线样式
-    parts['cmeans'].set_color('black')
-    parts['cmedians'].set_color('red')
+# 横向分组条形
+ax_qr.barh(y - height, q25, height, label='25%低薪分位数', color='#1f77b4')
+ax_qr.barh(y, q50, height, label='50%中等薪资分位数', color='#ff7f0e')
+ax_qr.barh(y + height, q75, height, label='75%高薪分位数', color='#2ca02c')
 
-    # 坐标轴设置
-    ax_qr.set_yticks([0,1,2])
-    ax_qr.set_yticklabels(quantile_labels, fontproperties=chinese_font)
-    ax_qr.set_xlabel("回归系数大小（正向=提升薪资，负向=压低薪资）", fontproperties=chinese_font)
-    ax_qr.set_title("各薪资分位数下全部特征回归系数分布小提琴图", fontproperties=chinese_font, fontsize=16)
-    ax_qr.axvline(x=0, linestyle="--", c="black", alpha=0.8, label="无影响基准线")
-    ax_qr.grid(axis="x", linestyle="--", alpha=0.5)
-    ax_qr.legend(prop=chinese_font)
+# 坐标轴设置
+ax_qr.set_yticks(y)
+ax_qr.set_yticklabels(features, fontproperties=chinese_font)
+ax_qr.set_xlabel('回归系数（数值越大正向提升薪资，负数压低薪资）', fontproperties=chinese_font, fontsize=12)
+ax_qr.set_title('各特征在不同薪资分位数下的回归系数对比', fontproperties=chinese_font, fontsize=16)
+ax_qr.axvline(x=0, color='black', linestyle='--', alpha=0.8, label='无影响基准线')
+ax_qr.legend(prop=chinese_font)
+ax_qr.grid(axis='x', linestyle='--', alpha=0.5)
 
-    # 在图旁标注全部特征系数表格，方便对照数值
-    st.pyplot(fig_qr)
-    st.dataframe(qr_result, use_container_width=True)
-    st.info("""
-图表解读：
-1. 小提琴宽度代表该系数数值出现的密度，越宽说明越多特征集中在此系数区间；
-2. 红色横线：每组分位数所有特征系数的中位数；黑色圆点：均值；
-3. 高薪75%分位数小提琴整体更靠右，说明高薪群体各特征的正向影响力普遍更大；
-4. 三组小提琴均存在明显靠右的极端值（对应「公司所在地区」高系数），其余特征系数集中在0附近。
-""")
+# 自适应横轴，自动展示负系数和极小值
+ax_qr.autoscale(axis='x')
+st.pyplot(fig_qr)
+st.dataframe(qr_result, use_container_width=True)
 
     st.divider()
     st.subheader("高级图表3：带95%置信区间年度薪资趋势")
