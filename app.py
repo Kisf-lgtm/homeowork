@@ -55,15 +55,16 @@ def load_and_preprocess_data():
     upper_bound = Q3 + 1.5 * IQR
     df_clean = df_clean[(df_clean['salary_in_usd'] >= lower_bound) & (df_clean['salary_in_usd'] <= upper_bound)]
 
-    # ✨ 核心修复：调整 size_map 权重顺序，使线性回归模型完美顺应“中型企业最高”的真实图表趋势
+    # ✨ 核心修复 1：在函数内部必须明确定义这两个映射字典
     exp_map = {'EN': 0, 'MI': 1, 'SE': 2, 'EX': 3}
-    size_map = {'S': 0, 'L': 1, 'M': 2}  
+    size_map = {'S': 0, 'M': 1, 'L': 2}
     
     # 标签编码器（仅用于无序分类变量）
     le_employment = LabelEncoder()
     le_location = LabelEncoder()
 
     df_encoded = df_clean.copy()
+    # ✨ 核心修复 2：使用上面定义好的 map 进行转换
     df_encoded['experience_level'] = df_encoded['experience_level'].map(exp_map)
     df_encoded['company_size'] = df_encoded['company_size'].map(size_map)
     df_encoded['employment_type'] = le_employment.fit_transform(df_encoded['employment_type'])
@@ -106,14 +107,15 @@ def load_and_preprocess_data():
     ).reset_index().sort_values('平均薪资', ascending=False)
 
     reg_result = pd.DataFrame({
-        '特征': ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模(已定序)', '公司所在地区'],
+        '特征': ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模', '公司所在地区'],
         '回归系数': model.coef_
     }).sort_values('回归系数', ascending=False)
 
+    # ✨ 核心修复 3：确保 return 出来的变量数量（14个）和内容完全正确
     return df, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2, \
            model, exp_map, le_employment, size_map, le_location
 
-# 外部解包接收
+# ✨ 核心修复 4：确保外部接收（解包）的变量名字、数量与 return 完美一一对应！
 df_raw, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2_score_val, \
 model, exp_map, le_employment, size_map, le_location = load_and_preprocess_data()
 
@@ -249,28 +251,23 @@ elif menu == "四、可视化图表与解读":
 """)
     st.divider()
 
-    # 图表3：公司规模柱状图
+    # ✨ 核心修复点 1：修正公司规模柱状图说明，使之与截图真实数据匹配
     st.subheader("图表3：不同公司规模平均薪资柱状图")
     fig4, ax4 = plt.subplots(figsize=(10, 6))
     company_label = ['小型S', '中型M', '大型L']
-    
-    # 为了保持柱状图的展示顺序为 S -> M -> L，这里按对应行手动匹配
-    s_val = size_group[size_group['company_size'] == 'S']['平均薪资'].values[0]
-    m_val = size_group[size_group['company_size'] == 'M']['平均薪资'].values[0]
-    l_val = size_group[size_group['company_size'] == 'L']['平均薪资'].values[0]
-    
-    bars4 = ax4.bar(company_label, [s_val, m_val, l_val], color='#2E86AB', alpha=0.8)
+    bars4 = ax4.bar(company_label, size_group['平均薪资'], color='#2E86AB', alpha=0.8)
     ax4.set_title('不同公司规模平均薪资对比', fontproperties=chinese_font, fontsize=14)
     ax4.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
+    
     ax4.grid(axis='y', linestyle='--', alpha=0.7)
     
     plt.setp(ax4.get_xticklabels(), fontproperties=chinese_font)
     plt.setp(ax4.get_yticklabels(), fontproperties=chinese_font)
-    for idx, val in enumerate([s_val, m_val, l_val]):
+    for idx, val in enumerate(size_group['平均薪资']):
         ax4.text(idx, val + 2000, f"{int(val)}", ha='center', fontproperties=chinese_font)
     st.pyplot(fig4)
     st.info("""
-**图表说明**：在剔除异常值后，**中型企业 (M)** 提供了最高的平均薪资（约14.0万美元），显著高于**大型企业 (L)**（约11.2万美元），而**小型企业 (S)** 的薪资水平最低（约7.6万美元）。这表明在中短期内，业务快速扩张且资金充足的中型成长型企业为了抢夺优秀数据人才，提供了极其激进的薪酬溢价。
+**图表说明**：在剔除异常值后，**中型企业 (M)** 提供了最高的平均薪资（约14.0万美元），甚至高于**大型企业 (L)**（约11.2万美元），而**小型企业 (S)** 的薪资水平最低（约7.6万美元）。这表明在中短期内，业务快速扩张且资金充足的中型企业可能对数据分析人才提供了更激进的溢价激励。
 """)
     st.divider()
 
@@ -309,7 +306,7 @@ elif menu == "四、可视化图表与解读":
         ax5.text(bar.get_x() + bar.get_width()/2, height + 2000, f"{int(height)}", ha='center', fontproperties=chinese_font)
     st.pyplot(fig5)
     st.info("""
-**图表说明**：在剔除薪资异常值后，**无远程岗位 (0)** 表现出最高的平均薪资（约14.1万美元），**全远程岗位 (100)** 紧随其后（约13.3万美元），而**混合远程岗位 (50)** 的平均薪资则较低（约7.3万美元）。
+**图表说明**：在剔除薪资异常值后，**无远程岗位 (0)** 表现出最高的平均薪资（约14.1万美元），**全远程岗位 (100)** 紧随其后（约13.3万美元），而**混合远程岗位 (50)** 的平均薪资则显著低于前两者（约7.3万美元）。
 """)
     st.divider()
 
@@ -322,4 +319,117 @@ elif menu == "四、可视化图表与解读":
     ax6.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
     ax6.tick_params(axis='x', rotation=45)
     ax6.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.setp(ax6.get_xtickla
+    plt.setp(ax6.get_xticklabels(), fontproperties=chinese_font)
+    plt.setp(ax6.get_yticklabels(), fontproperties=chinese_font)
+    st.pyplot(fig6)
+    st.info("""
+**图表说明**：不同地区薪资差异显著，美国、瑞士等发达国家的平均薪资远高于其他地区。
+""")
+
+# ===================== 5. 分析结论与行业建议 =====================
+elif menu == "五、分析结论与行业建议":
+    st.header("💡 案例分析结论与建议")
+    st.subheader("5.1 核心数据分析结果")
+    
+    # ✨ 核心修复点 2：修正结论中关于公司规模的描述
+    st.markdown("""
+1. **薪资整体特征**：全球数据分析师薪资整体呈正态分布，核心区间为 5 万 - 20 万美元，
+2020-2023 年薪资持续上涨，4 年涨幅超 55%，行业发展前景向好。
+
+2. **核心影响因素**：通过线性回归分析，对薪资影响程度从高到低依次为：
+**工作经验水平 > 公司所在地区 > 公司规模 > 工作年份 > 远程比例 > 雇佣类型**，
+其中工作经验是影响薪资的最核心因素，地区因素紧随其后。
+
+3. **维度差异规律**：
+- 经验维度：专家级岗位平均薪资是入门级的 3倍以上，薪资天花板随经验提升显著抬高；
+- **企业规模维度**：中型企业（M）的平均薪资最具竞争力（超14万美元），高于大型企业（L）的 11.2 万美元，而小型企业最低（约7.6万美元）。这表明中型成长型企业在挖掘优秀数据人才方面更愿意支付高额溢价；
+- 地区维度：发达国家/地区薪资水平显著高于发展中国家，美国、瑞士等地薪资优势明显；
+- 办公模式：无远程岗位与全远程岗位的平均薪资整体维持在较高水平（均超13万美元），而混合办公岗位（50%）的薪资水平则表现出明显劣势。
+""")
+
+    st.divider()
+    st.subheader("5.2 结论与建议")
+    st.subheader("💡 给数据从业者的求职建议")
+    
+    # ✨ 核心修复点 3：修正求职建议，让求职者看到中型企业的红利
+    st.markdown("""
+1. **优先积累核心工作经验**：工作经验是薪资提升的第一核心要素，建议从业者优先深耕行业，
+积累项目经验与专业能力，通过经验提升实现薪资的跨越式增长。
+
+2. **大胆考虑正值红利期的中型企业**：不要局限于大型企业，数据表明中型成长型企业为了快速推进数字化，愿意开出甚至超越大厂的薪资，这也是数据分析师的高薪突破口。
+
+3. **权衡办公模式做求职选择**：若追求高薪，应当优先选择全面线下坐班的岗位，或技术及管理体系更成熟的“纯全远程”企业；尽量避免选择定位相对模糊、薪资基数较低的半混合远程岗位。
+
+4. **持续跟进行业发展趋势**：数据行业薪资持续上涨，从业者需持续学习新技术、新方法，
+保持自身的行业竞争力，匹配行业的薪资增长节奏。
+""")
+
+    st.subheader("🏢 给企业的薪资制定建议")
+    
+    # ✨ 核心修复点 4：修正针对大型企业和小型企业的薪资反思建议
+    st.markdown("""
+1. **建立基于经验的阶梯式薪资体系**：工作经验是影响员工价值的核心因素，建议企业建立清晰的
+经验 - 薪资对应体系，为不同经验水平的员工提供匹配的薪资待遇，降低核心人才流失率。
+
+2. **大型企业应当反思薪资结构竞争力**：大型企业的平均薪资在此数据集中被中型企业反超，这要求大型企业优化其福利和长期激励之外的现金薪酬（Base Salary）吸引力，防止腰部核心人才被中型企业重金挖走。
+
+3. **提升小型企业的薪资竞争力**：小型企业薪资水平显著处于劣势，在人才竞争中极为被动，建议小型企业优化薪资结构，通过提供更多的股票期权、灵活办公环境与弹性职业发展空间来吸引人才。
+
+4. **规范远程或驻场办公的薪酬匹配**：根据岗位实际交付特征明确办公形态，全坐班和纯全远程往往能招募到高标准人才，企业在制定这类岗位薪资时，应参考高位行业标准以维持岗位的竞争力。
+""")
+
+# ===================== 六、在线薪资预测工具 =====================
+elif menu == "六、在线薪资预测工具":
+    st.header("🧮 在线薪资预测")
+    st.markdown("输入个人及工作信息，智能预测数据分析师税前年薪（美元）")
+
+    with st.form("salary_prediction_form"):
+        col1, col2 = st.columns(2)
+        with col1:
+            work_year = st.slider("工作年份", min_value=2020, max_value=2026, value=2026, step=1)
+            exp_options = ["入门级(0-2年)", "中级(2-5年)", "高级(5-10年)", "专家级(10年以上)"]
+            experience_cn = st.selectbox("工作经验水平", options=exp_options)
+            emp_cn = [emp_dict[item] for item in le_employment.classes_]
+            employment_cn = st.selectbox("雇佣类型", options=emp_cn)
+
+        with col2:
+            remote_ratio = st.select_slider("远程工作比例", options=[0, 50, 100], value=100, format_func=lambda x: f"{x}%")
+            size_options = ["小型企业", "中型企业", "大型企业"]
+            company_cn = st.selectbox("公司规模", options=size_options)
+            
+            # 将 location_list 改回模型返回的 le_location.classes_
+            location = st.selectbox("公司所在国家/地区", options=le_location.classes_)
+
+        # 确保提交按钮在 with st.form 的缩进内部
+        submit = st.form_submit_button("开始预测薪资", use_container_width=True)
+
+    if submit:
+        # 反向推导英文原始编码
+        exp_raw = rev_exp[experience_cn]
+        emp_raw = rev_emp[employment_cn]
+        size_raw = rev_size[company_cn]
+
+        # 定序变量映射回正确的数学尺度
+        exp_code = exp_map[exp_raw]
+        com_code = size_map[size_raw]
+        emp_code = le_employment.transform([emp_raw])[0]
+        loc_code = le_location.transform([location])[0]
+
+        input_features = np.array([[work_year, exp_code, emp_code, remote_ratio, com_code, loc_code]])
+        predicted_salary = model.predict(input_features)[0]
+
+        st.success("✅ 预测完成！")
+        # 兜底处理：防止回归模型外推到极端组合时出现负数
+        predicted_salary = max(0.0, predicted_salary)
+        st.metric(label="预测税前年薪（美元）", value=f"${predicted_salary:,.2f}")
+
+        st.info("""
+说明：
+1. 预测结果基于历史数据训练并经过定序修正的线性回归模型，趋势更科学、解释性更强。
+2. 薪资单位为美元，为税前年薪。
+3. 可修改参数对比不同场景薪资差异。
+        """)
+
+# 页脚
+st.markdown("---")
+st.markdown("© 2026 数据分析师薪资综合分析系统 | 全流程数据分析 + 可视化 + 智能预测")
