@@ -383,36 +383,36 @@ elif menu == "五、高级可视化分析":
 """)
 
     st.divider()
-   st.subheader("高级图表2：不同薪资分位数的特征影响系数对比（横向分组条形图）")
-fig_qr, ax_qr = plt.subplots(figsize=(12, 7))
+    st.subheader("高级图表2：不同薪资分位数的特征影响系数对比（横向分组条形图）")
+    fig_qr, ax_qr = plt.subplots(figsize=(12, 7))
 
-# 数据准备
-features = qr_result['特征'].tolist()
-q25 = qr_result['25%分位数系数'].tolist()
-q50 = qr_result['50%分位数系数'].tolist()
-q75 = qr_result['75%分位数系数'].tolist()
+    # 数据准备
+    features = qr_result['特征'].tolist()
+    q25 = qr_result['25%分位数系数'].tolist()
+    q50 = qr_result['50%分位数系数'].tolist()
+    q75 = qr_result['75%分位数系数'].tolist()
 
-y = np.arange(len(features))
-height = 0.25
+    y = np.arange(len(features))
+    height = 0.25
 
-# 横向barh
-ax_qr.barh(y - height, q25, height, label='25%分位数', color='#1f77b4')
-ax_qr.barh(y, q50, height, label='50%分位数', color='#ff7f0e')
-ax_qr.barh(y + height, q75, height, label='75%分位数', color='#2ca02c')
+    # 横向barh
+    ax_qr.barh(y - height, q25, height, label='25%分位数', color='#1f77b4')
+    ax_qr.barh(y, q50, height, label='50%分位数', color='#ff7f0e')
+    ax_qr.barh(y + height, q75, height, label='75%分位数', color='#2ca02c')
 
-# 坐标轴与标签
-ax_qr.set_yticks(y)
-ax_qr.set_yticklabels(features, fontproperties=chinese_font)
-ax_qr.set_xlabel('回归系数（数值越大，对薪资正向影响越强）', fontproperties=chinese_font, fontsize=12)
-ax_qr.set_title('不同薪资分位数特征影响系数对比', fontproperties=chinese_font, fontsize=16)
-ax_qr.axvline(x=0, color='black', linestyle='--', alpha=0.8, label='无影响基线')
-ax_qr.legend(prop=chinese_font)
-ax_qr.grid(axis='x', linestyle='--', alpha=0.5)
+    # 坐标轴与标签
+    ax_qr.set_yticks(y)
+    ax_qr.set_yticklabels(features, fontproperties=chinese_font)
+    ax_qr.set_xlabel('回归系数（数值越大，对薪资正向影响越强）', fontproperties=chinese_font, fontsize=12)
+    ax_qr.set_title('不同薪资分位数特征影响系数对比', fontproperties=chinese_font, fontsize=16)
+    ax_qr.axvline(x=0, color='black', linestyle='--', alpha=0.8, label='无影响基线')
+    ax_qr.legend(prop=chinese_font)
+    ax_qr.grid(axis='x', linestyle='--', alpha=0.5)
 
-# 自适应X轴，自动显示极小系数，不会压缩看不见
-ax_qr.autoscale(axis='x')
-st.pyplot(fig_qr)
-st.info("""
+    # 自适应X轴，自动显示极小系数，不会压缩看不见
+    ax_qr.autoscale(axis='x')
+    st.pyplot(fig_qr)
+    st.info("""
 图表优势：
 1. 横向布局解决x轴文字拥挤、重叠问题，6个特征名称完整清晰；
 2. 自适应横轴范围，低数值的经验、年份、规模等系数不会被压缩在0线消失；
