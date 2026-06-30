@@ -18,9 +18,10 @@ except:
     chinese_font = FontProperties(family="SimHei")
 plt.rcParams['axes.unicode_minus'] = False
 
-# ========= 自定义 CSS + JavaScript：侧边栏拖动时文字自适应 =========
+# ========= 自定义 CSS + JavaScript：侧边栏拖动时文字自适应 + 右侧内容响应式 =========
 st.markdown("""
 <style>
+    /* 侧边栏样式 */
     section[data-testid="stSidebar"] {
         min-width: 180px;
         max-width: 400px;
@@ -41,8 +42,26 @@ st.markdown("""
     .css-1d391kg, .css-1v3fvcr {
         font-size: calc(var(--sidebar-font-size, 16px) * 1.3) !important;
     }
+
+    /* ===== 新增响应式字体：右侧代码和说明随窗口缩放 ===== */
+    /* 代码块字体 */
+    .stCodeBlock pre {
+        font-size: clamp(10px, 1.2vw, 16px) !important;
+        line-height: 1.4 !important;
+    }
+    /* Info 提示框字体 */
+    .stAlert {
+        font-size: clamp(12px, 1.4vw, 18px) !important;
+        padding: 0.5rem 1rem !important;
+    }
+    /* Expander 标题也适当调整 */
+    .streamlit-expanderHeader {
+        font-size: clamp(13px, 1.5vw, 18px) !important;
+    }
 </style>
+
 <script>
+    // 侧边栏自适应（不变）
     function initSidebarResize() {
         const sidebar = document.querySelector('section[data-testid="stSidebar"]');
         if (!sidebar) {
@@ -287,7 +306,7 @@ elif menu == "四、基础可视化图表与解读":
         with col_info:
             with st.expander("📄 查看代码", expanded=True):
                 st.code(code_str, language="python")
-            st.info(info_text)   # 说明放在右侧，代码下方
+            st.info(info_text)
 
     # 图表1：薪资分布直方图
     st.subheader("图表1：薪资分布直方图")
