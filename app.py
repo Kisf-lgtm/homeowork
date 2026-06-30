@@ -374,7 +374,6 @@ elif menu == "五、高级可视化分析":
     ax_corr.set_yticks(np.arange(len(corr_labels)))
     ax_corr.set_xticklabels(corr_labels, fontproperties=chinese_font)
     ax_corr.set_yticklabels(corr_labels, fontproperties=chinese_font)
-    # 旋转x轴标签，修正ha参数位置
     plt.setp(ax_corr.get_xticklabels(), rotation=45, ha="right")
     ax_corr.set_title('薪资影响因素相关性热力图', fontproperties=chinese_font, fontsize=16)
     # 填充相关系数文本
@@ -383,9 +382,11 @@ elif menu == "五、高级可视化分析":
             text = ax_corr.text(j, i, f"{corr_matrix.iloc[i,j]:.2f}", ha="center", va="center", fontproperties=chinese_font, color="black")
     fig_corr.colorbar(im, ax=ax_corr)
     st.pyplot(fig_corr)
-    
+    st.info("""
+**图表说明**：热力图展示了各特征与薪资之间的两两相关性。其中**经验水平**（0.48）和**工作年份**（0.39）与薪资呈中等正相关，是影响薪资的最强因素；**公司所在地区**（0.16）和**公司规模**（0.13）也有一定正向影响；而**雇佣类型**和**远程比例**与薪资的相关性较弱（接近0）。这表明工作经验积累和时间推移是薪资增长的核心驱动力。
+""")
+
     st.divider()
-    # ========== 高级图表2：全新分组散点连线图（标准化系数） ==========
     st.subheader("高级图表2：不同薪资分位数的标准化影响系数对比（分组散点连线图）")
     fig_qr, ax_qr = plt.subplots(figsize=(12, 7))
 
@@ -418,11 +419,11 @@ elif menu == "五、高级可视化分析":
     ax_qr.legend(prop=chinese_font, loc='lower right')
     ax_qr.grid(axis='x', linestyle='--', alpha=0.5)
 
-    # 5. 自动调整横轴范围，确保负值也正常显示
     ax_qr.autoscale(axis='x')
     st.pyplot(fig_qr)
-
-    # 同时展示数据表格
+    st.info("""
+**图表说明**：该图展示了每个特征在不同薪资分位数（低薪25%、中薪50%、高薪75%）下的标准化回归系数，灰色虚线连接了低分位到高分位的系数变化。**经验水平**和**工作年份**在三个分位数下都保持最高的正向影响，且高薪群体（75%）受经验影响更大（系数更高），说明经验积累对顶尖薪资的拉动作用尤为明显。**公司所在地区**和**公司规模**的影响在中等薪资水平时较强，而**远程比例**和**雇佣类型**的系数接近零或略负，表明其对薪资分层贡献较小。
+""")
     st.dataframe(qr_result, use_container_width=True)
 
     st.divider()
@@ -440,6 +441,9 @@ elif menu == "五、高级可视化分析":
     ax_trend.legend(prop=chinese_font)
     ax_trend.grid(linestyle='--', alpha=0.5)
     st.pyplot(fig_trend)
+    st.info("""
+**图表说明**：折线图展示了2020年至2023年数据分析师的平均薪资和中位数薪资的逐年变化，同时用浅蓝色阴影表示平均薪资的95%置信区间（反映年度内薪资的波动范围）。整体趋势表明，平均薪资从约6.5万美元稳步增长至近10万美元，涨幅超过50%，行业处于高速增长期。置信区间逐年收窄，说明薪资分布趋于集中，市场定价更加成熟稳定。
+""")
 
     st.divider()
     st.subheader("高级图表4：公司规模-经验薪资二维热力图")
@@ -458,6 +462,9 @@ elif menu == "五、高级可视化分析":
             ax_heatmap2d.text(j,i,str(val),ha="center",va="center",fontproperties=chinese_font)
     fig_heatmap2d.colorbar(im2, ax=ax_heatmap2d)
     st.pyplot(fig_heatmap2d)
+    st.info("""
+**图表说明**：热力图展示了不同经验水平与公司规模组合下的平均薪资（美元）。从横向看，**中型企业（M）** 在每一经验等级上都提供了最高的平均薪资，尤其在中级（MI）和高级（SE）阶段，其薪资远超大型和小型企业；从纵向看，**专家级（EX）** 在任何规模的企业中都是薪资最高的群体。这一结果进一步验证了中型企业对数据人才的积极溢价策略，以及经验积累带来的薪资跃升效应。
+""")
 
 # ===================== 6. 分析结论与行业建议 =====================
 elif menu == "六、分析结论与行业建议":
