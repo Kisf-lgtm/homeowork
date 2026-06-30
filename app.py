@@ -1,5 +1,4 @@
 import streamlit as st
-import joblib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -7,10 +6,9 @@ from matplotlib.font_manager import FontProperties
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.linear_model import LinearRegression, QuantileRegressor
 from sklearn.metrics import r2_score
-import os
 
 # ========= 1. 全局配置 =========
-# 中文字体适配（自动切换）
+# 中文字体适配
 try:
     plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei']
     chinese_font = FontProperties(fname="/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc")
@@ -33,150 +31,125 @@ rev_size = {v: k for k, v in size_dict.items()}
 exp_order = ['EN', 'MI', 'SE', 'EX']
 size_order = ['S', 'M', 'L']
 
-# 图表基础尺寸配置（宽, 高）
+# 图表尺寸定义
 BASE_FIGSIZE = {
-    'default': (8, 4),
-    'small': (6, 3.5),
-    'medium': (9, 5),
-    'large': (10, 6),
-    'heatmap': (9, 6),
+    'thumb': (5, 3),      # 缩略图尺寸
+    'medium': (8, 4.5),   # 中等尺寸（放大用）
+    'large': (10, 6),     # 大尺寸（放大用）
+    'heatmap_thumb': (5, 4),
+    'heatmap_large': (9, 6),
 }
 
 # ========= 2. 辅助绘图函数 =========
 def plot_histogram(data, title, xlabel, ylabel, bins=30, color='#0070C0', figsize=None):
-    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['default'])
+    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['thumb'])
     ax.hist(data, bins=bins, edgecolor='black', color=color, alpha=0.7)
-    ax.set_title(title, fontproperties=chinese_font, fontsize=14)
-    ax.set_xlabel(xlabel, fontproperties=chinese_font, fontsize=12)
-    ax.set_ylabel(ylabel, fontproperties=chinese_font, fontsize=12)
+    ax.set_title(title, fontproperties=chinese_font, fontsize=12)
+    ax.set_xlabel(xlabel, fontproperties=chinese_font, fontsize=10)
+    ax.set_ylabel(ylabel, fontproperties=chinese_font, fontsize=10)
     ax.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.setp(ax.get_xticklabels(), fontproperties=chinese_font)
-    plt.setp(ax.get_yticklabels(), fontproperties=chinese_font)
+    plt.setp(ax.get_xticklabels(), fontproperties=chinese_font, fontsize=8)
+    plt.setp(ax.get_yticklabels(), fontproperties=chinese_font, fontsize=8)
     fig.tight_layout()
     return fig
 
 def plot_boxplot(data_list, labels, title, xlabel, ylabel, color='#0070C0', figsize=None):
-    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['default'])
+    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['thumb'])
     ax.boxplot(data_list, tick_labels=labels, patch_artist=True,
                boxprops=dict(facecolor=color, alpha=0.7))
-    ax.set_title(title, fontproperties=chinese_font, fontsize=14)
-    ax.set_xlabel(xlabel, fontproperties=chinese_font, fontsize=12)
-    ax.set_ylabel(ylabel, fontproperties=chinese_font, fontsize=12)
+    ax.set_title(title, fontproperties=chinese_font, fontsize=12)
+    ax.set_xlabel(xlabel, fontproperties=chinese_font, fontsize=10)
+    ax.set_ylabel(ylabel, fontproperties=chinese_font, fontsize=10)
     ax.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.setp(ax.get_xticklabels(), fontproperties=chinese_font)
-    plt.setp(ax.get_yticklabels(), fontproperties=chinese_font)
+    plt.setp(ax.get_xticklabels(), fontproperties=chinese_font, fontsize=8)
+    plt.setp(ax.get_yticklabels(), fontproperties=chinese_font, fontsize=8)
     fig.tight_layout()
     return fig
 
 def plot_bar(x, height, labels, title, ylabel, color='#2E86AB', figsize=None, value_format="{:.0f}"):
-    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['default'])
+    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['thumb'])
     bars = ax.bar(x, height, color=color, alpha=0.8)
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, fontproperties=chinese_font)
-    ax.set_title(title, fontproperties=chinese_font, fontsize=14)
-    ax.set_ylabel(ylabel, fontproperties=chinese_font, fontsize=12)
+    ax.set_xticklabels(labels, fontproperties=chinese_font, fontsize=8, rotation=30, ha='right')
+    ax.set_title(title, fontproperties=chinese_font, fontsize=12)
+    ax.set_ylabel(ylabel, fontproperties=chinese_font, fontsize=10)
     ax.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.setp(ax.get_yticklabels(), fontproperties=chinese_font)
+    plt.setp(ax.get_yticklabels(), fontproperties=chinese_font, fontsize=8)
     for bar, val in zip(bars, height):
         ax.text(bar.get_x() + bar.get_width()/2, val + 0.02*max(height),
-                value_format.format(val), ha='center', fontproperties=chinese_font)
+                value_format.format(val), ha='center', fontproperties=chinese_font, fontsize=8)
     fig.tight_layout()
     return fig
 
 def plot_line(x, y, title, xlabel, ylabel, color='#0070C0', marker='o', figsize=None, y2=None, y2_label=None):
-    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['default'])
+    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['thumb'])
     ax.plot(x, y, marker=marker, color=color, linewidth=2, label='平均薪资')
     if y2 is not None:
         ax.plot(x, y2, marker='s', color='#2E86AB', linestyle='--', label=y2_label)
-    ax.set_title(title, fontproperties=chinese_font, fontsize=14)
-    ax.set_xlabel(xlabel, fontproperties=chinese_font, fontsize=12)
-    ax.set_ylabel(ylabel, fontproperties=chinese_font, fontsize=12)
+    ax.set_title(title, fontproperties=chinese_font, fontsize=12)
+    ax.set_xlabel(xlabel, fontproperties=chinese_font, fontsize=10)
+    ax.set_ylabel(ylabel, fontproperties=chinese_font, fontsize=10)
     ax.grid(linestyle='--', alpha=0.7)
-    plt.setp(ax.get_xticklabels(), fontproperties=chinese_font)
-    plt.setp(ax.get_yticklabels(), fontproperties=chinese_font)
+    plt.setp(ax.get_xticklabels(), fontproperties=chinese_font, fontsize=8)
+    plt.setp(ax.get_yticklabels(), fontproperties=chinese_font, fontsize=8)
     if y2 is not None:
         ax.legend(prop=chinese_font)
     fig.tight_layout()
     return fig
 
 def plot_correlation(corr_matrix, labels, title, figsize=None):
-    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['heatmap'])
+    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['heatmap_thumb'])
     im = ax.imshow(corr_matrix, cmap="Blues", vmin=-1, vmax=1)
     ax.set_xticks(np.arange(len(labels)))
     ax.set_yticks(np.arange(len(labels)))
-    ax.set_xticklabels(labels, fontproperties=chinese_font)
-    ax.set_yticklabels(labels, fontproperties=chinese_font)
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
-    ax.set_title(title, fontproperties=chinese_font, fontsize=16)
+    ax.set_xticklabels(labels, fontproperties=chinese_font, fontsize=8, rotation=45, ha='right')
+    ax.set_yticklabels(labels, fontproperties=chinese_font, fontsize=8)
+    ax.set_title(title, fontproperties=chinese_font, fontsize=12)
     for i in range(len(labels)):
         for j in range(len(labels)):
             ax.text(j, i, f"{corr_matrix.iloc[i,j]:.2f}", ha="center", va="center",
-                    fontproperties=chinese_font, color="black")
+                    fontproperties=chinese_font, fontsize=7, color="black")
     fig.colorbar(im, ax=ax)
     fig.tight_layout()
     return fig
 
 def plot_qr_coefficients(qr_result, features, figsize=None):
-    """绘制分位数回归系数散点连线图"""
-    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['large'])
+    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['thumb'])
     q25 = qr_result['25%分位数系数'].tolist()
     q50 = qr_result['50%分位数系数'].tolist()
     q75 = qr_result['75%分位数系数'].tolist()
     y_pos = np.arange(len(features))
 
     ax.hlines(y=y_pos, xmin=q25, xmax=q75, color='gray', linestyle='--', linewidth=1.5, alpha=0.6)
-    ax.scatter(q25, y_pos - 0.15, color='#1f77b4', label='25% 低薪分位数', s=90, zorder=5, marker='o')
-    ax.scatter(q50, y_pos, color='#ff7f0e', label='50% 中等薪资分位数', s=120, zorder=5, marker='D')
-    ax.scatter(q75, y_pos + 0.15, color='#2ca02c', label='75% 高薪分位数', s=90, zorder=5, marker='^')
-    ax.axvline(x=0, color='red', linestyle='-', linewidth=1, alpha=0.3, label='无影响基准')
+    ax.scatter(q25, y_pos - 0.15, color='#1f77b4', label='25%', s=60, zorder=5, marker='o')
+    ax.scatter(q50, y_pos, color='#ff7f0e', label='50%', s=80, zorder=5, marker='D')
+    ax.scatter(q75, y_pos + 0.15, color='#2ca02c', label='75%', s=60, zorder=5, marker='^')
+    ax.axvline(x=0, color='red', linestyle='-', linewidth=1, alpha=0.3)
     ax.set_yticks(y_pos)
-    ax.set_yticklabels(features, fontproperties=chinese_font, fontsize=12)
-    ax.set_xlabel('标准化回归系数（Beta权重）\n（数值越大该特征对薪资提升越强，负值代表压低薪资）',
-                  fontproperties=chinese_font, fontsize=12)
-    ax.set_title('各特征在不同薪资分位数下的标准化影响系数深度对比', fontproperties=chinese_font, fontsize=16)
-    ax.legend(prop=chinese_font, loc='lower right')
+    ax.set_yticklabels(features, fontproperties=chinese_font, fontsize=9)
+    ax.set_xlabel('标准化回归系数', fontproperties=chinese_font, fontsize=10)
+    ax.set_title('分位数回归系数对比', fontproperties=chinese_font, fontsize=12)
+    ax.legend(prop=chinese_font, loc='lower right', fontsize=8)
     ax.grid(axis='x', linestyle='--', alpha=0.5)
     ax.autoscale(axis='x')
     fig.tight_layout()
     return fig
 
 def plot_heatmap_2d(pivot_table, xlabels, ylabels, title, figsize=None):
-    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['heatmap'])
+    fig, ax = plt.subplots(figsize=figsize or BASE_FIGSIZE['heatmap_thumb'])
     im = ax.imshow(pivot_table.values, cmap="Blues")
     ax.set_xticks(np.arange(len(xlabels)))
     ax.set_yticks(np.arange(len(ylabels)))
-    ax.set_xticklabels(xlabels, fontproperties=chinese_font)
-    ax.set_yticklabels(ylabels, fontproperties=chinese_font)
-    ax.set_title(title, fontproperties=chinese_font, fontsize=16)
+    ax.set_xticklabels(xlabels, fontproperties=chinese_font, fontsize=8)
+    ax.set_yticklabels(ylabels, fontproperties=chinese_font, fontsize=8)
+    ax.set_title(title, fontproperties=chinese_font, fontsize=12)
     for i in range(len(ylabels)):
         for j in range(len(xlabels)):
             val = int(pivot_table.iloc[i,j])
-            ax.text(j, i, str(val), ha="center", va="center", fontproperties=chinese_font)
+            ax.text(j, i, str(val), ha="center", va="center", fontproperties=chinese_font, fontsize=7)
     fig.colorbar(im, ax=ax)
     fig.tight_layout()
     return fig
-
-def show_chart_with_details(fig, info_text, code_str, zoom_factor=1.5):
-    """显示图表，并附带说明、代码展示和放大查看功能"""
-    st.pyplot(fig)
-    st.info(info_text)
-    with st.expander("📄 查看此图表的代码"):
-        st.code(code_str, language="python")
-    # 放大查看
-    with st.expander("🔍 放大查看（更大尺寸）"):
-        # 重新生成图表（乘上缩放系数）
-        # 由于我们不能直接修改fig的尺寸，需要重新绘制，所以这里使用缓存机制：我们将绘图函数作为参数传递，但实现复杂。
-        # 简便方法：在外部调用时传入放大尺寸，这里我们只负责显示，不负责生成。
-        # 因此我们调整设计：在调用show_chart_with_details时，如果zoom_factor>1，会重新绘制一次大图？
-        # 为简化，我们这里只显示一个提醒，实际放大功能由调用者实现（见下文）。
-        st.warning("点击展开后，下方将显示放大版本（请等待重新绘制）")
-        # 由于该函数不包含绘图逻辑，我们需在调用处处理。
-        # 因此实际使用中，我们会把绘图代码和放大绘图都放在外部。
-        # 这里留空，实际由外层代码处理。
-
-# 为了简化，我们放弃使用这个通用函数，而是采用更直接的方式：在每个图表后面单独处理。
-# 但为了代码优化，我们仍然使用辅助绘图函数，并在外层直接调用两次（正常和放大）。
-# 下面我们采用更简洁的方式：在显示正常图后，用一个expander显示放大图（重新调用绘图函数并传更大的figsize）。
 
 # ========= 3. 数据加载与建模 =========
 @st.cache_data
@@ -223,7 +196,6 @@ def load_and_preprocess_data():
     qr_model_50.fit(X_scaled, y)
     qr_model_75.fit(X_scaled, y)
 
-    # 分组统计
     exp_group = df_clean.groupby('experience_level')['salary_in_usd'].agg(
         样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
     ).reset_index()
@@ -281,6 +253,23 @@ menu = st.sidebar.radio(
      "四、基础可视化图表与解读", "五、高级可视化分析", "六、分析结论与行业建议",
      "七、在线薪资预测工具", "八、交互式薪资探索器"]
 )
+
+# ========= 辅助函数：显示缩略图+放大 =========
+def display_chart_with_zoom(fig_thumb, info_text, code_str, zoom_fig_func):
+    """
+    显示缩略图，并提供放大查看功能
+    fig_thumb: 缩略图 figure 对象
+    info_text: 说明文本
+    code_str: 代码字符串
+    zoom_fig_func: 无参数函数，返回放大后的 figure 对象
+    """
+    st.pyplot(fig_thumb)
+    st.info(info_text)
+    with st.expander("📄 查看此图表的代码"):
+        st.code(code_str, language="python")
+    with st.expander("🔍 点击放大查看（大尺寸）"):
+        st.pyplot(zoom_fig_func())
+        st.caption("（大图模式，尺寸约为缩略图的2倍）")
 
 # ========= 5. 各菜单页面 =========
 if menu == "一、项目分析目标与预期":
@@ -346,27 +335,17 @@ elif menu == "三、数据总览与统计报表":
 elif menu == "四、基础可视化图表与解读":
     st.header("📷 基础可视化图表及详细说明")
 
-    # 辅助函数：显示图表+说明+代码+放大
-    def display_chart(fig, info, code, zoom_fig_func):
-        st.pyplot(fig)
-        st.info(info)
-        with st.expander("📄 查看此图表的代码"):
-            st.code(code, language="python")
-        with st.expander("🔍 放大查看"):
-            st.pyplot(zoom_fig_func())
-            st.caption("（放大版，尺寸约为原始1.5倍）")
-
     # 图表1：薪资分布直方图
     st.subheader("图表1：薪资分布直方图")
-    fig1 = plot_histogram(df_clean['salary_in_usd'],
-                          title='数据分析师薪资分布（美元）',
-                          xlabel='薪资(美元)', ylabel='样本数量',
-                          figsize=BASE_FIGSIZE['medium'])
+    fig1_thumb = plot_histogram(df_clean['salary_in_usd'],
+                                title='数据分析师薪资分布（美元）',
+                                xlabel='薪资(美元)', ylabel='样本数量',
+                                figsize=BASE_FIGSIZE['thumb'])
     code1 = '''
 fig = plot_histogram(df_clean['salary_in_usd'],
                      title='数据分析师薪资分布（美元）',
                      xlabel='薪资(美元)', ylabel='样本数量',
-                     figsize=BASE_FIGSIZE['medium'])
+                     figsize=BASE_FIGSIZE['thumb'])
 st.pyplot(fig)
 '''
     info1 = "**图表说明**：数据分析师薪资整体呈近似正态分布，大部分样本薪资集中在 5 万 - 20 万美元区间，峰值出现在 10-15 万美元区间。"
@@ -374,52 +353,52 @@ st.pyplot(fig)
         return plot_histogram(df_clean['salary_in_usd'],
                               title='数据分析师薪资分布（美元）',
                               xlabel='薪资(美元)', ylabel='样本数量',
-                              figsize=(BASE_FIGSIZE['medium'][0]*1.5, BASE_FIGSIZE['medium'][1]*1.5))
-    display_chart(fig1, info1, code1, zoom1)
+                              figsize=BASE_FIGSIZE['large'])
+    display_chart_with_zoom(fig1_thumb, info1, code1, zoom1)
     st.divider()
 
     # 图表2：经验水平箱线图
     st.subheader("图表2：不同经验水平薪资箱线图")
     box_data = [df_clean[df_clean['experience_level'] == level]['salary_in_usd'] for level in exp_order]
-    fig2 = plot_boxplot(box_data, exp_order,
-                        title='不同经验水平薪资箱线图',
-                        xlabel='经验等级(EN入门 / MI中级 / SE高级 / EX专家)',
-                        ylabel='薪资(美元)',
-                        figsize=BASE_FIGSIZE['medium'])
+    fig2_thumb = plot_boxplot(box_data, exp_order,
+                              title='不同经验水平薪资箱线图',
+                              xlabel='经验等级(EN/MI/SE/EX)',
+                              ylabel='薪资(美元)',
+                              figsize=BASE_FIGSIZE['thumb'])
     code2 = '''
 box_data = [df_clean[df_clean['experience_level'] == level]['salary_in_usd'] for level in exp_order]
 fig = plot_boxplot(box_data, exp_order,
                    title='不同经验水平薪资箱线图',
-                   xlabel='经验等级(EN入门 / MI中级 / SE高级 / EX专家)',
+                   xlabel='经验等级(EN/MI/SE/EX)',
                    ylabel='薪资(美元)',
-                   figsize=BASE_FIGSIZE['medium'])
+                   figsize=BASE_FIGSIZE['thumb'])
 st.pyplot(fig)
 '''
-    info2 = "**图表说明**：薪资水平与工作经验呈现显著的正相关关系，入门级 (EN) 平均薪资最低，随经验逐级上涨，专家级 (EX) 薪资最高。"
+    info2 = "**图表说明**：薪资水平与工作经验呈现显著的正相关关系，入门级 (EN) 最低，专家级 (EX) 最高。"
     def zoom2():
         return plot_boxplot(box_data, exp_order,
                             title='不同经验水平薪资箱线图',
-                            xlabel='经验等级(EN入门 / MI中级 / SE高级 / EX专家)',
+                            xlabel='经验等级(EN/MI/SE/EX)',
                             ylabel='薪资(美元)',
-                            figsize=(BASE_FIGSIZE['medium'][0]*1.5, BASE_FIGSIZE['medium'][1]*1.5))
-    display_chart(fig2, info2, code2, zoom2)
+                            figsize=BASE_FIGSIZE['large'])
+    display_chart_with_zoom(fig2_thumb, info2, code2, zoom2)
     st.divider()
 
     # 图表3：公司规模平均薪资柱状图
     st.subheader("图表3：不同公司规模平均薪资柱状图")
     company_label = ['小型S', '中型M', '大型L']
-    fig3 = plot_bar(range(len(size_group)), size_group['平均薪资'], company_label,
-                    title='不同公司规模平均薪资对比',
-                    ylabel='平均薪资(美元)',
-                    color='#2E86AB',
-                    figsize=BASE_FIGSIZE['medium'])
+    fig3_thumb = plot_bar(range(len(size_group)), size_group['平均薪资'], company_label,
+                          title='不同公司规模平均薪资对比',
+                          ylabel='平均薪资(美元)',
+                          color='#2E86AB',
+                          figsize=BASE_FIGSIZE['thumb'])
     code3 = '''
 company_label = ['小型S', '中型M', '大型L']
 fig = plot_bar(range(len(size_group)), size_group['平均薪资'], company_label,
                title='不同公司规模平均薪资对比',
                ylabel='平均薪资(美元)',
                color='#2E86AB',
-               figsize=BASE_FIGSIZE['medium'])
+               figsize=BASE_FIGSIZE['thumb'])
 st.pyplot(fig)
 '''
     info3 = "**图表说明**：中型企业 (M) 平均薪资最高（约14.0万美元），大型企业 (L) 次之（约11.2万美元），小型企业 (S) 最低（约7.6万美元）。"
@@ -428,27 +407,27 @@ st.pyplot(fig)
                         title='不同公司规模平均薪资对比',
                         ylabel='平均薪资(美元)',
                         color='#2E86AB',
-                        figsize=(BASE_FIGSIZE['medium'][0]*1.5, BASE_FIGSIZE['medium'][1]*1.5))
-    display_chart(fig3, info3, code3, zoom3)
+                        figsize=BASE_FIGSIZE['large'])
+    display_chart_with_zoom(fig3_thumb, info3, code3, zoom3)
     st.divider()
 
     # 图表4：年度薪资趋势
     st.subheader("图表4：2020-2023年度薪资趋势折线图")
-    fig4 = plot_line(year_group['work_year'], year_group['平均薪资'],
-                     title='2020-2023 薪资变化趋势',
-                     xlabel='年份', ylabel='平均薪资(美元)',
-                     figsize=BASE_FIGSIZE['medium'])
+    fig4_thumb = plot_line(year_group['work_year'], year_group['平均薪资'],
+                           title='2020-2023 薪资变化趋势',
+                           xlabel='年份', ylabel='平均薪资(美元)',
+                           figsize=BASE_FIGSIZE['thumb'])
     # 添加数据标签
     for x, y in zip(year_group['work_year'], year_group['平均薪资']):
-        fig4.axes[0].text(x, y+2000, f"{int(y)}", ha='center', fontproperties=chinese_font)
-    fig4.tight_layout()
+        fig4_thumb.axes[0].text(x, y+2000, f"{int(y)}", ha='center', fontproperties=chinese_font, fontsize=8)
+    fig4_thumb.tight_layout()
     code4 = '''
 fig = plot_line(year_group['work_year'], year_group['平均薪资'],
                 title='2020-2023 薪资变化趋势',
                 xlabel='年份', ylabel='平均薪资(美元)',
-                figsize=BASE_FIGSIZE['medium'])
+                figsize=BASE_FIGSIZE['thumb'])
 for x, y in zip(year_group['work_year'], year_group['平均薪资']):
-    fig.axes[0].text(x, y+2000, f"{int(y)}", ha='center', fontproperties=chinese_font)
+    fig.axes[0].text(x, y+2000, f"{int(y)}", ha='center', fontproperties=chinese_font, fontsize=8)
 fig.tight_layout()
 st.pyplot(fig)
 '''
@@ -457,29 +436,29 @@ st.pyplot(fig)
         fig = plot_line(year_group['work_year'], year_group['平均薪资'],
                         title='2020-2023 薪资变化趋势',
                         xlabel='年份', ylabel='平均薪资(美元)',
-                        figsize=(BASE_FIGSIZE['medium'][0]*1.5, BASE_FIGSIZE['medium'][1]*1.5))
+                        figsize=BASE_FIGSIZE['large'])
         for x, y in zip(year_group['work_year'], year_group['平均薪资']):
             fig.axes[0].text(x, y+2000, f"{int(y)}", ha='center', fontproperties=chinese_font)
         fig.tight_layout()
         return fig
-    display_chart(fig4, info4, code4, zoom4)
+    display_chart_with_zoom(fig4_thumb, info4, code4, zoom4)
     st.divider()
 
     # 图表5：远程模式平均薪资
     st.subheader("图表5：不同远程模式平均薪资柱状图")
     remote_labels = ["无远程(0)", "混合远程(50)", "全远程(100)"]
-    fig5 = plot_bar(range(3), remote_group['平均薪资'], remote_labels,
-                    title='不同远程模式平均薪资对比',
-                    ylabel='平均薪资(美元)',
-                    color='#A23B72',
-                    figsize=BASE_FIGSIZE['medium'])
+    fig5_thumb = plot_bar(range(3), remote_group['平均薪资'], remote_labels,
+                          title='不同远程模式平均薪资对比',
+                          ylabel='平均薪资(美元)',
+                          color='#A23B72',
+                          figsize=BASE_FIGSIZE['thumb'])
     code5 = '''
 remote_labels = ["无远程(0)", "混合远程(50)", "全远程(100)"]
 fig = plot_bar(range(3), remote_group['平均薪资'], remote_labels,
                title='不同远程模式平均薪资对比',
                ylabel='平均薪资(美元)',
                color='#A23B72',
-               figsize=BASE_FIGSIZE['medium'])
+               figsize=BASE_FIGSIZE['thumb'])
 st.pyplot(fig)
 '''
     info5 = "**图表说明**：无远程岗位 (0) 平均薪资最高（约14.1万美元），全远程 (100) 次之（约13.3万美元），混合远程 (50) 最低（约7.3万美元）。"
@@ -488,28 +467,27 @@ st.pyplot(fig)
                         title='不同远程模式平均薪资对比',
                         ylabel='平均薪资(美元)',
                         color='#A23B72',
-                        figsize=(BASE_FIGSIZE['medium'][0]*1.5, BASE_FIGSIZE['medium'][1]*1.5))
-    display_chart(fig5, info5, code5, zoom5)
+                        figsize=BASE_FIGSIZE['large'])
+    display_chart_with_zoom(fig5_thumb, info5, code5, zoom5)
     st.divider()
 
     # 图表6：Top10高薪地区
     st.subheader("图表6：Top10高薪地区平均薪资对比")
     top10 = location_group.head(10)
-    fig6 = plot_bar(range(10), top10['平均薪资'], top10['company_location'],
-                    title='Top10高薪地区平均薪资对比',
-                    ylabel='平均薪资(美元)',
-                    color='#F18F01',
-                    figsize=BASE_FIGSIZE['large'])
-    # 旋转x轴标签
-    fig6.axes[0].tick_params(axis='x', rotation=45)
-    fig6.tight_layout()
+    fig6_thumb = plot_bar(range(10), top10['平均薪资'], top10['company_location'],
+                          title='Top10高薪地区平均薪资对比',
+                          ylabel='平均薪资(美元)',
+                          color='#F18F01',
+                          figsize=BASE_FIGSIZE['thumb'])
+    fig6_thumb.axes[0].tick_params(axis='x', rotation=45)
+    fig6_thumb.tight_layout()
     code6 = '''
 top10 = location_group.head(10)
 fig = plot_bar(range(10), top10['平均薪资'], top10['company_location'],
                title='Top10高薪地区平均薪资对比',
                ylabel='平均薪资(美元)',
                color='#F18F01',
-               figsize=BASE_FIGSIZE['large'])
+               figsize=BASE_FIGSIZE['thumb'])
 fig.axes[0].tick_params(axis='x', rotation=45)
 fig.tight_layout()
 st.pyplot(fig)
@@ -520,103 +498,93 @@ st.pyplot(fig)
                        title='Top10高薪地区平均薪资对比',
                        ylabel='平均薪资(美元)',
                        color='#F18F01',
-                       figsize=(BASE_FIGSIZE['large'][0]*1.5, BASE_FIGSIZE['large'][1]*1.5))
+                       figsize=BASE_FIGSIZE['large'])
         fig.axes[0].tick_params(axis='x', rotation=45)
         fig.tight_layout()
         return fig
-    display_chart(fig6, info6, code6, zoom6)
+    display_chart_with_zoom(fig6_thumb, info6, code6, zoom6)
 
 # ========= 五、高级可视化分析 =========
 elif menu == "五、高级可视化分析":
     st.header("🔬 高级可视化分析（专业级深度洞察）")
     st.markdown("本模块使用原生Matplotlib绘制专业图表，深度挖掘薪资数据底层规律。")
 
-    # 复用显示函数
-    def display_chart(fig, info, code, zoom_fig_func):
-        st.pyplot(fig)
-        st.info(info)
-        with st.expander("📄 查看此图表的代码"):
-            st.code(code, language="python")
-        with st.expander("🔍 放大查看"):
-            st.pyplot(zoom_fig_func())
-            st.caption("（放大版，尺寸约为原始1.5倍）")
-
     # 高级图表1：相关性热力图
     st.divider()
     st.subheader("高级图表1：特征相关性热力图")
     corr_labels = ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模', '公司所在地区', '薪资(美元)']
-    fig1 = plot_correlation(corr_matrix, corr_labels,
-                            title='薪资影响因素相关性热力图',
-                            figsize=BASE_FIGSIZE['heatmap'])
+    fig1_thumb = plot_correlation(corr_matrix, corr_labels,
+                                  title='薪资影响因素相关性热力图',
+                                  figsize=BASE_FIGSIZE['heatmap_thumb'])
     code1 = '''
 corr_labels = ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模', '公司所在地区', '薪资(美元)']
 fig = plot_correlation(corr_matrix, corr_labels,
                        title='薪资影响因素相关性热力图',
-                       figsize=BASE_FIGSIZE['heatmap'])
+                       figsize=BASE_FIGSIZE['heatmap_thumb'])
 st.pyplot(fig)
 '''
     info1 = "**图表说明**：经验水平（0.48）和工作年份（0.39）与薪资呈中等正相关，是影响薪资的最强因素；公司所在地区（0.16）和公司规模（0.13）也有一定正向影响；雇佣类型和远程比例相关性较弱。"
     def zoom1():
         return plot_correlation(corr_matrix, corr_labels,
                                 title='薪资影响因素相关性热力图',
-                                figsize=(BASE_FIGSIZE['heatmap'][0]*1.5, BASE_FIGSIZE['heatmap'][1]*1.5))
-    display_chart(fig1, info1, code1, zoom1)
+                                figsize=BASE_FIGSIZE['heatmap_large'])
+    display_chart_with_zoom(fig1_thumb, info1, code1, zoom1)
 
     # 高级图表2：分位数回归系数
     st.divider()
-    st.subheader("高级图表2：不同薪资分位数的标准化影响系数对比（分组散点连线图）")
+    st.subheader("高级图表2：不同薪资分位数的标准化影响系数对比")
     features = qr_result['特征'].tolist()
-    fig2 = plot_qr_coefficients(qr_result, features, figsize=BASE_FIGSIZE['large'])
+    fig2_thumb = plot_qr_coefficients(qr_result, features, figsize=BASE_FIGSIZE['thumb'])
     code2 = '''
 features = qr_result['特征'].tolist()
-fig = plot_qr_coefficients(qr_result, features, figsize=BASE_FIGSIZE['large'])
+fig = plot_qr_coefficients(qr_result, features, figsize=BASE_FIGSIZE['thumb'])
 st.pyplot(fig)
 '''
     info2 = "**图表说明**：经验水平和工作年份在三个分位数下都保持最高的正向影响，且高薪群体（75%）受经验影响更大；公司所在地区和公司规模的影响在中等薪资水平时较强，远程比例和雇佣类型贡献较小。"
     def zoom2():
-        return plot_qr_coefficients(qr_result, features, figsize=(BASE_FIGSIZE['large'][0]*1.5, BASE_FIGSIZE['large'][1]*1.5))
-    display_chart(fig2, info2, code2, zoom2)
+        return plot_qr_coefficients(qr_result, features, figsize=BASE_FIGSIZE['large'])
+    display_chart_with_zoom(fig2_thumb, info2, code2, zoom2)
     st.dataframe(qr_result, use_container_width=True)
 
     # 高级图表3：带置信区间的年度趋势
     st.divider()
     st.subheader("高级图表3：带95%置信区间年度薪资趋势")
-    # 计算置信区间
     year_group['ci_lower'] = year_group['平均薪资'] - 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
     year_group['ci_upper'] = year_group['平均薪资'] + 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
-    fig3, ax = plt.subplots(figsize=BASE_FIGSIZE['large'])
-    ax.plot(year_group['work_year'], year_group['平均薪资'], marker='o', c='#0070C0', linewidth=3, label='平均薪资')
-    ax.fill_between(year_group['work_year'], year_group['ci_lower'], year_group['ci_upper'], alpha=0.2, color='#0070C0', label='95%置信区间')
-    ax.plot(year_group['work_year'], year_group['中位数'], marker='s', c='#2E86AB', linestyle='--', label='中位数薪资')
-    ax.set_title('2020-2023薪资趋势（置信区间）', fontproperties=chinese_font, fontsize=16)
-    ax.set_xlabel('年份', fontproperties=chinese_font)
-    ax.set_ylabel('薪资(美元)', fontproperties=chinese_font)
+    # 缩略图
+    fig3_thumb, ax = plt.subplots(figsize=BASE_FIGSIZE['thumb'])
+    ax.plot(year_group['work_year'], year_group['平均薪资'], marker='o', c='#0070C0', linewidth=2, label='平均薪资')
+    ax.fill_between(year_group['work_year'], year_group['ci_lower'], year_group['ci_upper'], alpha=0.2, color='#0070C0', label='95% CI')
+    ax.plot(year_group['work_year'], year_group['中位数'], marker='s', c='#2E86AB', linestyle='--', label='中位数')
+    ax.set_title('2020-2023薪资趋势（置信区间）', fontproperties=chinese_font, fontsize=12)
+    ax.set_xlabel('年份', fontproperties=chinese_font, fontsize=10)
+    ax.set_ylabel('薪资(美元)', fontproperties=chinese_font, fontsize=10)
     ax.set_xticks(year_group['work_year'])
-    ax.legend(prop=chinese_font)
+    ax.legend(prop=chinese_font, fontsize=8)
     ax.grid(linestyle='--', alpha=0.5)
-    fig3.tight_layout()
+    fig3_thumb.tight_layout()
     code3 = '''
 year_group['ci_lower'] = year_group['平均薪资'] - 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
 year_group['ci_upper'] = year_group['平均薪资'] + 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
-fig, ax = plt.subplots(figsize=BASE_FIGSIZE['large'])
-ax.plot(year_group['work_year'], year_group['平均薪资'], marker='o', c='#0070C0', linewidth=3, label='平均薪资')
-ax.fill_between(year_group['work_year'], year_group['ci_lower'], year_group['ci_upper'], alpha=0.2, color='#0070C0', label='95%置信区间')
-ax.plot(year_group['work_year'], year_group['中位数'], marker='s', c='#2E86AB', linestyle='--', label='中位数薪资')
-ax.set_title('2020-2023薪资趋势（置信区间）', fontproperties=chinese_font, fontsize=16)
-ax.set_xlabel('年份', fontproperties=chinese_font)
-ax.set_ylabel('薪资(美元)', fontproperties=chinese_font)
+fig, ax = plt.subplots(figsize=BASE_FIGSIZE['thumb'])
+ax.plot(year_group['work_year'], year_group['平均薪资'], marker='o', c='#0070C0', linewidth=2, label='平均薪资')
+ax.fill_between(year_group['work_year'], year_group['ci_lower'], year_group['ci_upper'], alpha=0.2, color='#0070C0', label='95% CI')
+ax.plot(year_group['work_year'], year_group['中位数'], marker='s', c='#2E86AB', linestyle='--', label='中位数')
+ax.set_title('2020-2023薪资趋势（置信区间）', fontproperties=chinese_font, fontsize=12)
+ax.set_xlabel('年份', fontproperties=chinese_font, fontsize=10)
+ax.set_ylabel('薪资(美元)', fontproperties=chinese_font, fontsize=10)
 ax.set_xticks(year_group['work_year'])
-ax.legend(prop=chinese_font)
+ax.legend(prop=chinese_font, fontsize=8)
 ax.grid(linestyle='--', alpha=0.5)
 fig.tight_layout()
 st.pyplot(fig)
 '''
     info3 = "**图表说明**：平均薪资从约6.5万美元稳步增长至近10万美元，涨幅超50%，置信区间逐年收窄，表明市场定价更加成熟稳定。"
     def zoom3():
-        fig, ax = plt.subplots(figsize=(BASE_FIGSIZE['large'][0]*1.5, BASE_FIGSIZE['large'][1]*1.5))
+        fig, ax = plt.subplots(figsize=BASE_FIGSIZE['large'])
         ax.plot(year_group['work_year'], year_group['平均薪资'], marker='o', c='#0070C0', linewidth=3, label='平均薪资')
-        ax.fill_between(year_group['work_year'], year_group['ci_lower'], year_group['ci_upper'], alpha=0.2, color='#0070C0', label='95%置信区间')
-        ax.plot(year_group['work_year'], year_group['中位数'], marker='s', c='#2E86AB', linestyle='--', label='中位数薪资')
+        ax.fill_between(year_group['work_year'], year_group['ci_lower'], year_group['ci_upper'], alpha=0.2, color='#0070C0', label='95% CI')
+        ax.plot(year_group['work_year'], year_group['中位数'], marker='s', c='#2E86AB', linestyle='--', label='中位数')
         ax.set_title('2020-2023薪资趋势（置信区间）', fontproperties=chinese_font, fontsize=16)
         ax.set_xlabel('年份', fontproperties=chinese_font)
         ax.set_ylabel('薪资(美元)', fontproperties=chinese_font)
@@ -625,24 +593,24 @@ st.pyplot(fig)
         ax.grid(linestyle='--', alpha=0.5)
         fig.tight_layout()
         return fig
-    display_chart(fig3, info3, code3, zoom3)
+    display_chart_with_zoom(fig3_thumb, info3, code3, zoom3)
 
     # 高级图表4：公司规模-经验热力图
     st.divider()
     st.subheader("高级图表4：公司规模-经验薪资二维热力图")
     pivot = df_clean.pivot_table(index='experience_level', columns='company_size', values='salary_in_usd', aggfunc='mean').reindex(index=exp_order, columns=size_order)
-    fig4 = plot_heatmap_2d(pivot,
-                           xlabels=[size_dict[s] for s in size_order],
-                           ylabels=[exp_dict[e] for e in exp_order],
-                           title='公司规模-经验水平平均薪资热力图',
-                           figsize=BASE_FIGSIZE['heatmap'])
+    fig4_thumb = plot_heatmap_2d(pivot,
+                                 xlabels=[size_dict[s] for s in size_order],
+                                 ylabels=[exp_dict[e] for e in exp_order],
+                                 title='公司规模-经验水平平均薪资热力图',
+                                 figsize=BASE_FIGSIZE['heatmap_thumb'])
     code4 = '''
 pivot = df_clean.pivot_table(index='experience_level', columns='company_size', values='salary_in_usd', aggfunc='mean').reindex(index=exp_order, columns=size_order)
 fig = plot_heatmap_2d(pivot,
                       xlabels=[size_dict[s] for s in size_order],
                       ylabels=[exp_dict[e] for e in exp_order],
                       title='公司规模-经验水平平均薪资热力图',
-                      figsize=BASE_FIGSIZE['heatmap'])
+                      figsize=BASE_FIGSIZE['heatmap_thumb'])
 st.pyplot(fig)
 '''
     info4 = "**图表说明**：中型企业（M）在每一经验等级上平均薪资最高，尤其在MI和SE阶段远超其他规模；专家级（EX）在所有规模中都是最高薪资群体。"
@@ -651,8 +619,8 @@ st.pyplot(fig)
                                xlabels=[size_dict[s] for s in size_order],
                                ylabels=[exp_dict[e] for e in exp_order],
                                title='公司规模-经验水平平均薪资热力图',
-                               figsize=(BASE_FIGSIZE['heatmap'][0]*1.5, BASE_FIGSIZE['heatmap'][1]*1.5))
-    display_chart(fig4, info4, code4, zoom4)
+                               figsize=BASE_FIGSIZE['heatmap_large'])
+    display_chart_with_zoom(fig4_thumb, info4, code4, zoom4)
 
 # ========= 六、分析结论与建议 =========
 elif menu == "六、分析结论与行业建议":
@@ -769,22 +737,22 @@ elif menu == "八、交互式薪资探索器":
     st.subheader("📈 筛选后薪资分布可视化")
     col1, col2 = st.columns(2)
     with col1:
-        fig = plot_histogram(df_filtered['salary_in_usd'],
-                             title='筛选后薪资分布直方图',
-                             xlabel='薪资(美元)', ylabel='样本数量',
-                             figsize=BASE_FIGSIZE['small'])
-        st.pyplot(fig)
+        fig_hist = plot_histogram(df_filtered['salary_in_usd'],
+                                  title='筛选后薪资分布直方图',
+                                  xlabel='薪资(美元)', ylabel='样本数量',
+                                  figsize=BASE_FIGSIZE['thumb'])
+        st.pyplot(fig_hist)
     with col2:
         if len(exp_filter) > 1 and len(df_filtered) > 0:
             exist_levels = [l for l in exp_filter if l in df_filtered['experience_level'].unique()]
             if len(exist_levels) > 1:
                 box_data = [df_filtered[df_filtered['experience_level'] == level]['salary_in_usd'] for level in exist_levels]
                 labels = [exp_dict[l] for l in exist_levels]
-                fig = plot_boxplot(box_data, labels,
-                                   title='筛选后不同经验水平薪资箱线图',
-                                   xlabel='经验等级', ylabel='薪资(美元)',
-                                   figsize=BASE_FIGSIZE['small'])
-                st.pyplot(fig)
+                fig_box = plot_boxplot(box_data, labels,
+                                       title='筛选后不同经验水平薪资箱线图',
+                                       xlabel='经验等级', ylabel='薪资(美元)',
+                                       figsize=BASE_FIGSIZE['thumb'])
+                st.pyplot(fig_box)
             else:
                 st.info("有效经验等级不足2个，无法绘制箱线图")
         else:
