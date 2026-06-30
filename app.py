@@ -275,19 +275,19 @@ elif menu == "三、数据总览与统计报表":
     st.subheader("7. 分位数回归特征系数（不同薪资层级影响差异）")
     st.dataframe(qr_result, use_container_width=True)
 
-# ===================== 4. 基础可视化图表（已缩小并调整布局） =====================
+# ===================== 4. 基础可视化图表 =====================
 elif menu == "四、基础可视化图表与解读":
     st.header("📷 基础可视化图表及详细说明")
 
-    # 辅助函数：显示图表+说明，右侧显示代码
+    # 辅助函数：左侧显示图表，右侧显示代码和说明
     def show_chart_with_code(fig, info_text, code_str):
-        col_chart, col_code = st.columns([2, 1])
+        col_chart, col_info = st.columns([2, 1])
         with col_chart:
             st.pyplot(fig)
-            st.info(info_text)
-        with col_code:
+        with col_info:
             with st.expander("📄 查看代码", expanded=True):
                 st.code(code_str, language="python")
+            st.info(info_text)   # 说明放在右侧，代码下方
 
     # 图表1：薪资分布直方图
     st.subheader("图表1：薪资分布直方图")
@@ -472,19 +472,19 @@ st.pyplot(fig6)
     info6 = "**图表说明**：不同地区薪资差异显著，美国、瑞士等发达国家的平均薪资远高于其他地区。"
     show_chart_with_code(fig6, info6, code6)
 
-# ===================== 5. 高级可视化分析（已缩小并调整布局） =====================
+# ===================== 5. 高级可视化分析 =====================
 elif menu == "五、高级可视化分析":
     st.header("🔬 高级可视化分析（专业级深度洞察）")
     st.markdown("本模块使用原生Matplotlib绘制专业图表，深度挖掘薪资数据底层规律。")
 
     def show_chart_with_code(fig, info_text, code_str):
-        col_chart, col_code = st.columns([2, 1])
+        col_chart, col_info = st.columns([2, 1])
         with col_chart:
             st.pyplot(fig)
-            st.info(info_text)
-        with col_code:
+        with col_info:
             with st.expander("📄 查看代码", expanded=True):
                 st.code(code_str, language="python")
+            st.info(info_text)
 
     st.divider()
     st.subheader("高级图表1：特征相关性热力图")
