@@ -540,7 +540,12 @@ st.pyplot(fig_corr)
     ax_qr.set_yticklabels(features, fontproperties=chinese_font, fontsize=9)
     ax_qr.set_xlabel('标准化回归系数（Beta权重）', fontproperties=chinese_font, fontsize=10)
     ax_qr.set_title('分位数回归系数对比', fontproperties=chinese_font, fontsize=12)
-    ax_qr.legend(prop=chinese_font, loc='lower right', fontsize=7)
+
+    # ========== 修改图例位置：放在图表右侧外部，不遮挡数据 ==========
+    ax_qr.legend(prop=chinese_font, loc='center left', bbox_to_anchor=(1.0, 0.5), fontsize=8)
+    # 调整布局，为右侧图例留出空间
+    fig_qr.subplots_adjust(right=0.75)
+
     ax_qr.grid(axis='x', linestyle='--', alpha=0.5)
     ax_qr.autoscale(axis='x')
     fig_qr.tight_layout()
@@ -561,7 +566,9 @@ ax_qr.set_yticks(y_pos)
 ax_qr.set_yticklabels(features, fontproperties=chinese_font, fontsize=9)
 ax_qr.set_xlabel('标准化回归系数（Beta权重）', fontproperties=chinese_font, fontsize=10)
 ax_qr.set_title('分位数回归系数对比', fontproperties=chinese_font, fontsize=12)
-ax_qr.legend(prop=chinese_font, loc='lower right', fontsize=7)
+# 图例放在右侧外部
+ax_qr.legend(prop=chinese_font, loc='center left', bbox_to_anchor=(1.0, 0.5), fontsize=8)
+fig_qr.subplots_adjust(right=0.75)
 ax_qr.grid(axis='x', linestyle='--', alpha=0.5)
 ax_qr.autoscale(axis='x')
 fig_qr.tight_layout()
