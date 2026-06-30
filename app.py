@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.linear_model import LinearRegression, QuantileRegressor
 from sklearn.metrics import r2_score
 import os
@@ -67,30 +67,34 @@ def load_and_preprocess_data():
     le_job = LabelEncoder()
 
     df_encoded = df_clean.copy()
-    # 定序变量转换
     df_encoded['experience_level'] = df_encoded['experience_level'].map(exp_map)
     df_encoded['company_size'] = df_encoded['company_size'].map(size_map)
-    # 无序分类变量编码
     df_encoded['employment_type'] = le_employment.fit_transform(df_encoded['employment_type'])
     df_encoded['company_location'] = le_location.fit_transform(df_encoded['company_location'])
     df_encoded['job_title'] = le_job.fit_transform(df_encoded['job_title'])
 
-    # 训练线性回归模型
+    # 准备特征
     feature_cols = ['work_year', 'experience_level', 'employment_type', 'remote_ratio', 'company_size', 'company_location']
     X = df_encoded[feature_cols]
     y = df_encoded['salary_in_usd']
+
+    # ========= 核心修复：引入标准化器 =========
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    # 训练线性回归模型（基于标准化后的特征）
     model = LinearRegression()
-    model.fit(X, y)
-    y_pred = model.predict(X)
+    model.fit(X_scaled, y)
+    y_pred = model.predict(X_scaled)
     r2 = r2_score(y, y_pred)
 
-    # 分位数回归模型
-    qr_model_25 = QuantileRegressor(quantile=0.25, alpha=0.1)
-    qr_model_50 = QuantileRegressor(quantile=0.5, alpha=0.1)
-    qr_model_75 = QuantileRegressor(quantile=0.75, alpha=0.1)
-    qr_model_25.fit(X, y)
-    qr_model_50.fit(X, y)
-    qr_model_75.fit(X, y)
+    # 分位数回归模型（调低 alpha 避免过度压缩）
+    qr_model_25 = QuantileRegressor(quantile=0.25, alpha=0.01, solver='highs')
+    qr_model_50 = QuantileRegressor(quantile=0.5, alpha=0.01, solver='highs')
+    qr_model_75 = QuantileRegressor(quantile=0.75, alpha=0.01, solver='highs')
+    qr_model_25.fit(X_scaled, y)
+    qr_model_50.fit(X_scaled, y)
+    qr_model_75.fit(X_scaled, y)
 
     # 多维度分组统计
     exp_group = df_clean.groupby('experience_level')['salary_in_usd'].agg(
@@ -118,6 +122,7 @@ def load_and_preprocess_data():
         样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
     ).reset_index().sort_values('平均薪资', ascending=False)
 
+    # 回归结果（标准化系数）
     reg_result = pd.DataFrame({
         '特征': ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模', '公司所在地区'],
         '回归系数': model.coef_
@@ -136,12 +141,12 @@ def load_and_preprocess_data():
 
     return df, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2, \
            model, exp_map, le_employment, size_map, le_location, le_job, qr_result, corr_matrix, \
-           qr_model_25, qr_model_50, qr_model_75
+           qr_model_25, qr_model_50, qr_model_75, scaler
 
-# 解包数据
+# 解包数据（新增 scaler）
 df_raw, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2_score_val, \
 model, exp_map, le_employment, size_map, le_location, le_job, qr_result, corr_matrix, \
-qr_model_25, qr_model_50, qr_model_75 = load_and_preprocess_data()
+qr_model_25, qr_model_50, qr_model_75, scaler = load_and_preprocess_data()
 
 # ===================== 页面标题 & 侧边导航 =====================
 st.title("💰 数据分析师薪资分析与预测综合平台")
@@ -379,37 +384,45 @@ elif menu == "五、高级可视化分析":
     fig_corr.colorbar(im, ax=ax_corr)
     st.pyplot(fig_corr)
     
-
     st.divider()
-    st.subheader("高级图表2：不同薪资分位数的特征影响系数对比（横向分组条形图）")
+    # ========== 高级图表2：全新分组散点连线图（标准化系数） ==========
+    st.subheader("高级图表2：不同薪资分位数的标准化影响系数对比（分组散点连线图）")
     fig_qr, ax_qr = plt.subplots(figsize=(12, 7))
 
-# 数据准备
+    # 准备数据（已标准化，具备完全可比性）
     features = qr_result['特征'].tolist()
     q25 = qr_result['25%分位数系数'].tolist()
     q50 = qr_result['50%分位数系数'].tolist()
     q75 = qr_result['75%分位数系数'].tolist()
 
-    y = np.arange(len(features))
-    height = 0.25
+    y_pos = np.arange(len(features))
 
-# 横向分组条形
-    ax_qr.barh(y - height, q25, height, label='25%低薪分位数', color='#1f77b4')
-    ax_qr.barh(y, q50, height, label='50%中等薪资分位数', color='#ff7f0e')
-    ax_qr.barh(y + height, q75, height, label='75%高薪分位数', color='#2ca02c')
+    # 1. 绘制连接线：从 25% 到 75%（展示低薪到高薪的影响跨度）
+    ax_qr.hlines(y=y_pos, xmin=q25, xmax=q75, color='gray', linestyle='--', linewidth=1.5, alpha=0.6)
 
-# 坐标轴设置
-    ax_qr.set_yticks(y)
-    ax_qr.set_yticklabels(features, fontproperties=chinese_font)
-    ax_qr.set_xlabel('回归系数（数值越大正向提升薪资，负数压低薪资）', fontproperties=chinese_font, fontsize=12)
-    ax_qr.set_title('各特征在不同薪资分位数下的回归系数对比', fontproperties=chinese_font, fontsize=16)
-    ax_qr.axvline(x=0, color='black', linestyle='--', alpha=0.8, label='无影响基准线')
-    ax_qr.legend(prop=chinese_font)
+    # 2. 绘制三个分位数的散点（不同形状与颜色，凸显层级）
+    ax_qr.scatter(q25, y_pos - 0.15, color='#1f77b4', label='25% 低薪分位数', s=90, zorder=5, marker='o')
+    ax_qr.scatter(q50, y_pos, color='#ff7f0e', label='50% 中等薪资分位数', s=120, zorder=5, marker='D')
+    ax_qr.scatter(q75, y_pos + 0.15, color='#2ca02c', label='75% 高薪分位数', s=90, zorder=5, marker='^')
+
+    # 3. 零基准线（区分正向/负向影响）
+    ax_qr.axvline(x=0, color='red', linestyle='-', linewidth=1, alpha=0.3, label='无影响基准')
+
+    # 4. 坐标轴与标签设置
+    ax_qr.set_yticks(y_pos)
+    ax_qr.set_yticklabels(features, fontproperties=chinese_font, fontsize=12)
+    ax_qr.set_xlabel('标准化回归系数（Beta权重）\n（数值越大该特征对薪资提升越强，负值代表压低薪资）', 
+                     fontproperties=chinese_font, fontsize=12)
+    ax_qr.set_title('各特征在不同薪资分位数下的标准化影响系数深度对比', 
+                    fontproperties=chinese_font, fontsize=16)
+    ax_qr.legend(prop=chinese_font, loc='lower right')
     ax_qr.grid(axis='x', linestyle='--', alpha=0.5)
 
-# 自适应横轴，自动展示负系数和极小值
+    # 5. 自动调整横轴范围，确保负值也正常显示
     ax_qr.autoscale(axis='x')
     st.pyplot(fig_qr)
+
+    # 同时展示数据表格
     st.dataframe(qr_result, use_container_width=True)
 
     st.divider()
@@ -529,10 +542,13 @@ elif menu == "七、在线薪资预测工具":
         loc_code = le_location.transform([location])[0]
 
         input_features = np.array([[work_year, exp_code, emp_code, remote_ratio, com_code, loc_code]])
-        predicted_salary = model.predict(input_features)[0]
-        q25_salary = qr_model_25.predict(input_features)[0]
-        q50_salary = qr_model_50.predict(input_features)[0]
-        q75_salary = qr_model_75.predict(input_features)[0]
+        # 使用标准化器转换
+        input_features_scaled = scaler.transform(input_features)
+
+        predicted_salary = model.predict(input_features_scaled)[0]
+        q25_salary = qr_model_25.predict(input_features_scaled)[0]
+        q50_salary = qr_model_50.predict(input_features_scaled)[0]
+        q75_salary = qr_model_75.predict(input_features_scaled)[0]
 
         st.success("✅ 预测完成！")
         predicted_salary = max(0.0, predicted_salary)
