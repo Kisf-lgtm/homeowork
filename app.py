@@ -558,7 +558,7 @@ st.pyplot(fig_corr)
     ax_qr.axvline(x=0, color='red', linestyle='-', linewidth=1, alpha=0.3, label='无影响基准')
     ax_qr.set_yticks(y_pos)
     ax_qr.set_yticklabels(features, fontproperties=chinese_font, fontsize=12)
-    ax_qr.set_xlabel('标准化回归系数（Beta权重）\\n（数值越大该特征对薪资提升越强，负值代表压低薪资）', 
+    ax_qr.set_xlabel('标准化回归系数（Beta权重）\n（数值越大该特征对薪资提升越强，负值代表压低薪资）', 
                      fontproperties=chinese_font, fontsize=12)
     ax_qr.set_title('各特征在不同薪资分位数下的标准化影响系数深度对比', 
                     fontproperties=chinese_font, fontsize=16)
