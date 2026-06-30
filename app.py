@@ -251,7 +251,7 @@ elif menu == "四、基础可视化图表与解读":
 
     # 图表1：薪资分布直方图
     st.subheader("图表1：薪资分布直方图")
-    fig1, ax1 = plt.subplots(figsize=(12, 6))
+    fig1, ax1 = plt.subplots(figsize=(10, 5))  # 调小尺寸
     ax1.hist(df_clean['salary_in_usd'], bins=30, edgecolor='black', color='#0070C0', alpha=0.7)
     ax1.set_title('数据分析师薪资分布（美元）', fontproperties=chinese_font, fontsize=14)
     ax1.set_xlabel('薪资(美元)', fontproperties=chinese_font, fontsize=12)
@@ -259,16 +259,30 @@ elif menu == "四、基础可视化图表与解读":
     ax1.grid(axis='y', linestyle='--', alpha=0.7)
     plt.setp(ax1.get_xticklabels(), fontproperties=chinese_font)
     plt.setp(ax1.get_yticklabels(), fontproperties=chinese_font)
+    fig1.tight_layout()
     st.pyplot(fig1)
     st.info("""
 **图表说明**：数据分析师薪资整体呈近似正态分布，大部分样本薪资集中在 5 万 - 20 万美元区间，
 峰值出现在 10-15 万美元区间，整体分布符合职场薪资的常规特征。
 """)
+    with st.expander("📄 查看此图表的代码"):
+        st.code("""
+fig1, ax1 = plt.subplots(figsize=(10, 5))
+ax1.hist(df_clean['salary_in_usd'], bins=30, edgecolor='black', color='#0070C0', alpha=0.7)
+ax1.set_title('数据分析师薪资分布（美元）', fontproperties=chinese_font, fontsize=14)
+ax1.set_xlabel('薪资(美元)', fontproperties=chinese_font, fontsize=12)
+ax1.set_ylabel('样本数量', fontproperties=chinese_font, fontsize=12)
+ax1.grid(axis='y', linestyle='--', alpha=0.7)
+plt.setp(ax1.get_xticklabels(), fontproperties=chinese_font)
+plt.setp(ax1.get_yticklabels(), fontproperties=chinese_font)
+fig1.tight_layout()
+st.pyplot(fig1)
+        """, language="python")
     st.divider()
 
     # 图表2：经验水平箱线图
     st.subheader("图表2：不同经验水平薪资箱线图")
-    fig2, ax2 = plt.subplots(figsize=(12, 6))
+    fig2, ax2 = plt.subplots(figsize=(10, 5))
     box_data = [df_clean[df_clean['experience_level'] == level]['salary_in_usd'] for level in exp_order]
     box = ax2.boxplot(box_data, tick_labels=exp_order, patch_artist=True, boxprops=dict(facecolor='#0070C0', alpha=0.7))
     ax2.set_title('不同经验水平薪资箱线图', fontproperties=chinese_font, fontsize=14)
@@ -277,36 +291,65 @@ elif menu == "四、基础可视化图表与解读":
     ax2.grid(axis='y', linestyle='--', alpha=0.7)
     plt.setp(ax2.get_xticklabels(), fontproperties=chinese_font)
     plt.setp(ax2.get_yticklabels(), fontproperties=chinese_font)
+    fig2.tight_layout()
     st.pyplot(fig2)
     st.info("""
 **图表说明**：薪资水平与工作经验呈现显著的正相关关系，入门级 (EN) 平均薪资最低，
 随经验逐级上涨，专家级 (EX) 薪资为四个等级中最高，职级越高收入优势越明显。
 """)
+    with st.expander("📄 查看此图表的代码"):
+        st.code("""
+fig2, ax2 = plt.subplots(figsize=(10, 5))
+box_data = [df_clean[df_clean['experience_level'] == level]['salary_in_usd'] for level in exp_order]
+ax2.boxplot(box_data, tick_labels=exp_order, patch_artist=True, boxprops=dict(facecolor='#0070C0', alpha=0.7))
+ax2.set_title('不同经验水平薪资箱线图', fontproperties=chinese_font, fontsize=14)
+ax2.set_xlabel('经验等级(EN入门 / MI中级 / SE高级 / EX专家)', fontproperties=chinese_font, fontsize=12)
+ax2.set_ylabel('薪资(美元)', fontproperties=chinese_font, fontsize=12)
+ax2.grid(axis='y', linestyle='--', alpha=0.7)
+plt.setp(ax2.get_xticklabels(), fontproperties=chinese_font)
+plt.setp(ax2.get_yticklabels(), fontproperties=chinese_font)
+fig2.tight_layout()
+st.pyplot(fig2)
+        """, language="python")
     st.divider()
 
     # 图表3：不同公司规模平均薪资柱状图
     st.subheader("图表3：不同公司规模平均薪资柱状图")
-    fig4, ax4 = plt.subplots(figsize=(10, 6))
+    fig4, ax4 = plt.subplots(figsize=(9, 5))
     company_label = ['小型S', '中型M', '大型L']
     bars4 = ax4.bar(company_label, size_group['平均薪资'], color='#2E86AB', alpha=0.8)
     ax4.set_title('不同公司规模平均薪资对比', fontproperties=chinese_font, fontsize=14)
     ax4.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
-    
     ax4.grid(axis='y', linestyle='--', alpha=0.7)
-    
     plt.setp(ax4.get_xticklabels(), fontproperties=chinese_font)
     plt.setp(ax4.get_yticklabels(), fontproperties=chinese_font)
     for idx, val in enumerate(size_group['平均薪资']):
         ax4.text(idx, val + 2000, f"{int(val)}", ha='center', fontproperties=chinese_font)
+    fig4.tight_layout()
     st.pyplot(fig4)
     st.info("""
 **图表说明**：在剔除异常值后，**中型企业 (M)** 提供了最高的平均薪资（约14.0万美元），甚至高于**大型企业 (L)**（约11.2万美元），而**小型企业 (S)** 的薪资水平最低（约7.6万美元）。这表明在中短期内，业务快速扩张且资金充足的中型企业可能对数据分析人才提供了更激进的溢价激励。
 """)
+    with st.expander("📄 查看此图表的代码"):
+        st.code("""
+fig4, ax4 = plt.subplots(figsize=(9, 5))
+company_label = ['小型S', '中型M', '大型L']
+bars4 = ax4.bar(company_label, size_group['平均薪资'], color='#2E86AB', alpha=0.8)
+ax4.set_title('不同公司规模平均薪资对比', fontproperties=chinese_font, fontsize=14)
+ax4.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
+ax4.grid(axis='y', linestyle='--', alpha=0.7)
+plt.setp(ax4.get_xticklabels(), fontproperties=chinese_font)
+plt.setp(ax4.get_yticklabels(), fontproperties=chinese_font)
+for idx, val in enumerate(size_group['平均薪资']):
+    ax4.text(idx, val + 2000, f"{int(val)}", ha='center', fontproperties=chinese_font)
+fig4.tight_layout()
+st.pyplot(fig4)
+        """, language="python")
     st.divider()
 
     # 图表4：年度薪资趋势折线图
     st.subheader("图表4：2020-2023年度薪资趋势折线图")
-    fig3, ax3 = plt.subplots(figsize=(12, 6))
+    fig3, ax3 = plt.subplots(figsize=(10, 5))
     ax3.plot(year_group['work_year'], year_group['平均薪资'], marker='o', color='#0070C0', linewidth=2)
     ax3.set_title('2020-2023 薪资变化趋势', fontproperties=chinese_font, fontsize=14)
     ax3.set_xlabel('年份', fontproperties=chinese_font, fontsize=12)
@@ -316,15 +359,31 @@ elif menu == "四、基础可视化图表与解读":
     plt.setp(ax3.get_yticklabels(), fontproperties=chinese_font)
     for x, y_val in zip(year_group['work_year'], year_group['平均薪资']):
         ax3.text(x, y_val + 2000, f"{int(y_val)}", ha='center', fontproperties=chinese_font)
+    fig3.tight_layout()
     st.pyplot(fig3)
     st.info("""
 **图表说明**：2020-2023 年数据分析师平均薪资呈持续上涨趋势，行业发展前景向好。
 """)
+    with st.expander("📄 查看此图表的代码"):
+        st.code("""
+fig3, ax3 = plt.subplots(figsize=(10, 5))
+ax3.plot(year_group['work_year'], year_group['平均薪资'], marker='o', color='#0070C0', linewidth=2)
+ax3.set_title('2020-2023 薪资变化趋势', fontproperties=chinese_font, fontsize=14)
+ax3.set_xlabel('年份', fontproperties=chinese_font, fontsize=12)
+ax3.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
+ax3.grid(linestyle='--', alpha=0.7)
+plt.setp(ax3.get_xticklabels(), fontproperties=chinese_font)
+plt.setp(ax3.get_yticklabels(), fontproperties=chinese_font)
+for x, y_val in zip(year_group['work_year'], year_group['平均薪资']):
+    ax3.text(x, y_val + 2000, f"{int(y_val)}", ha='center', fontproperties=chinese_font)
+fig3.tight_layout()
+st.pyplot(fig3)
+        """, language="python")
     st.divider()
 
     # 图表5：不同远程模式平均薪资
     st.subheader("图表5：不同远程模式平均薪资柱状图")
-    fig5, ax5 = plt.subplots(figsize=(10, 6))
+    fig5, ax5 = plt.subplots(figsize=(9, 5))
     x5 = [0, 1, 2]
     remote_labels = ["无远程(0)", "混合远程(50)", "全远程(100)"]
     bars5 = ax5.bar(x5, remote_group['平均薪资'], color='#A23B72', alpha=0.8)
@@ -337,28 +396,61 @@ elif menu == "四、基础可视化图表与解读":
     for bar in bars5:
         height = bar.get_height()
         ax5.text(bar.get_x() + bar.get_width()/2, height + 2000, f"{int(height)}", ha='center', fontproperties=chinese_font)
+    fig5.tight_layout()
     st.pyplot(fig5)
     st.info("""
 **图表说明**：在剔除薪资异常值后，**无远程岗位 (0)** 表现出最高的平均薪资（约14.1万美元），**全远程岗位 (100)** 紧随其后（约13.3万美元），而**混合远程岗位 (50)** 的平均薪资则显著低于前两者（约7.3万美元）。
 """)
+    with st.expander("📄 查看此图表的代码"):
+        st.code("""
+fig5, ax5 = plt.subplots(figsize=(9, 5))
+x5 = [0, 1, 2]
+remote_labels = ["无远程(0)", "混合远程(50)", "全远程(100)"]
+bars5 = ax5.bar(x5, remote_group['平均薪资'], color='#A23B72', alpha=0.8)
+ax5.set_xticks(x5)
+ax5.set_xticklabels(remote_labels, fontproperties=chinese_font)
+ax5.set_title('不同远程模式平均薪资对比', fontproperties=chinese_font, fontsize=14)
+ax5.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
+ax5.grid(axis='y', linestyle='--', alpha=0.7)
+plt.setp(ax5.get_yticklabels(), fontproperties=chinese_font)
+for bar in bars5:
+    height = bar.get_height()
+    ax5.text(bar.get_x() + bar.get_width()/2, height + 2000, f"{int(height)}", ha='center', fontproperties=chinese_font)
+fig5.tight_layout()
+st.pyplot(fig5)
+        """, language="python")
     st.divider()
 
     # 图表6：Top10高薪地区柱状图
     st.subheader("图表6：Top10高薪地区平均薪资对比")
-    fig6, ax6 = plt.subplots(figsize=(12, 6))
+    fig6, ax6 = plt.subplots(figsize=(11, 5))
     top10_loc = location_group.head(10)
     bars6 = ax6.bar(top10_loc['company_location'], top10_loc['平均薪资'], color='#F18F01', alpha=0.8)
     ax6.set_title('Top10高薪地区平均薪资对比', fontproperties=chinese_font, fontsize=14)
     ax6.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
-    # 修复：旋转标签单独设置，不放进tick_params
     labels = ax6.get_xticklabels()
     plt.setp(labels, rotation=45, ha='right', fontproperties=chinese_font)
     ax6.grid(axis='y', linestyle='--', alpha=0.7)
     plt.setp(ax6.get_yticklabels(), fontproperties=chinese_font)
+    fig6.tight_layout()
     st.pyplot(fig6)
     st.info("""
 **图表说明**：不同地区薪资差异显著，美国、瑞士等发达国家的平均薪资远高于其他地区。
 """)
+    with st.expander("📄 查看此图表的代码"):
+        st.code("""
+fig6, ax6 = plt.subplots(figsize=(11, 5))
+top10_loc = location_group.head(10)
+bars6 = ax6.bar(top10_loc['company_location'], top10_loc['平均薪资'], color='#F18F01', alpha=0.8)
+ax6.set_title('Top10高薪地区平均薪资对比', fontproperties=chinese_font, fontsize=14)
+ax6.set_ylabel('平均薪资(美元)', fontproperties=chinese_font, fontsize=12)
+labels = ax6.get_xticklabels()
+plt.setp(labels, rotation=45, ha='right', fontproperties=chinese_font)
+ax6.grid(axis='y', linestyle='--', alpha=0.7)
+plt.setp(ax6.get_yticklabels(), fontproperties=chinese_font)
+fig6.tight_layout()
+st.pyplot(fig6)
+        """, language="python")
 
 # ===================== 5. 高级可视化分析（全部移除seaborn绘图，仅保留原生matplotlib） =====================
 elif menu == "五、高级可视化分析":
@@ -367,7 +459,7 @@ elif menu == "五、高级可视化分析":
 
     st.divider()
     st.subheader("高级图表1：特征相关性热力图")
-    fig_corr, ax_corr = plt.subplots(figsize=(12, 8))
+    fig_corr, ax_corr = plt.subplots(figsize=(9, 6))
     corr_labels = ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模', '公司所在地区', '薪资(美元)']
     im = ax_corr.imshow(corr_matrix, cmap="Blues", vmin=-1, vmax=1)
     ax_corr.set_xticks(np.arange(len(corr_labels)))
@@ -376,59 +468,91 @@ elif menu == "五、高级可视化分析":
     ax_corr.set_yticklabels(corr_labels, fontproperties=chinese_font)
     plt.setp(ax_corr.get_xticklabels(), rotation=45, ha="right")
     ax_corr.set_title('薪资影响因素相关性热力图', fontproperties=chinese_font, fontsize=16)
-    # 填充相关系数文本
     for i in range(len(corr_labels)):
         for j in range(len(corr_labels)):
-            text = ax_corr.text(j, i, f"{corr_matrix.iloc[i,j]:.2f}", ha="center", va="center", fontproperties=chinese_font, color="black")
+            ax_corr.text(j, i, f"{corr_matrix.iloc[i,j]:.2f}", ha="center", va="center", fontproperties=chinese_font, color="black")
     fig_corr.colorbar(im, ax=ax_corr)
+    fig_corr.tight_layout()
     st.pyplot(fig_corr)
     st.info("""
 **图表说明**：热力图展示了各特征与薪资之间的两两相关性。其中**经验水平**（0.48）和**工作年份**（0.39）与薪资呈中等正相关，是影响薪资的最强因素；**公司所在地区**（0.16）和**公司规模**（0.13）也有一定正向影响；而**雇佣类型**和**远程比例**与薪资的相关性较弱（接近0）。这表明工作经验积累和时间推移是薪资增长的核心驱动力。
 """)
+    with st.expander("📄 查看此图表的代码"):
+        st.code("""
+fig_corr, ax_corr = plt.subplots(figsize=(9, 6))
+corr_labels = ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模', '公司所在地区', '薪资(美元)']
+im = ax_corr.imshow(corr_matrix, cmap="Blues", vmin=-1, vmax=1)
+ax_corr.set_xticks(np.arange(len(corr_labels)))
+ax_corr.set_yticks(np.arange(len(corr_labels)))
+ax_corr.set_xticklabels(corr_labels, fontproperties=chinese_font)
+ax_corr.set_yticklabels(corr_labels, fontproperties=chinese_font)
+plt.setp(ax_corr.get_xticklabels(), rotation=45, ha="right")
+ax_corr.set_title('薪资影响因素相关性热力图', fontproperties=chinese_font, fontsize=16)
+for i in range(len(corr_labels)):
+    for j in range(len(corr_labels)):
+        ax_corr.text(j, i, f"{corr_matrix.iloc[i,j]:.2f}", ha="center", va="center", fontproperties=chinese_font, color="black")
+fig_corr.colorbar(im, ax=ax_corr)
+fig_corr.tight_layout()
+st.pyplot(fig_corr)
+        """, language="python")
 
     st.divider()
     st.subheader("高级图表2：不同薪资分位数的标准化影响系数对比（分组散点连线图）")
-    fig_qr, ax_qr = plt.subplots(figsize=(12, 7))
-
-    # 准备数据（已标准化，具备完全可比性）
+    fig_qr, ax_qr = plt.subplots(figsize=(10, 6))
     features = qr_result['特征'].tolist()
     q25 = qr_result['25%分位数系数'].tolist()
     q50 = qr_result['50%分位数系数'].tolist()
     q75 = qr_result['75%分位数系数'].tolist()
-
     y_pos = np.arange(len(features))
 
-    # 1. 绘制连接线：从 25% 到 75%（展示低薪到高薪的影响跨度）
     ax_qr.hlines(y=y_pos, xmin=q25, xmax=q75, color='gray', linestyle='--', linewidth=1.5, alpha=0.6)
-
-    # 2. 绘制三个分位数的散点（不同形状与颜色，凸显层级）
     ax_qr.scatter(q25, y_pos - 0.15, color='#1f77b4', label='25% 低薪分位数', s=90, zorder=5, marker='o')
     ax_qr.scatter(q50, y_pos, color='#ff7f0e', label='50% 中等薪资分位数', s=120, zorder=5, marker='D')
     ax_qr.scatter(q75, y_pos + 0.15, color='#2ca02c', label='75% 高薪分位数', s=90, zorder=5, marker='^')
-
-    # 3. 零基准线（区分正向/负向影响）
     ax_qr.axvline(x=0, color='red', linestyle='-', linewidth=1, alpha=0.3, label='无影响基准')
-
-    # 4. 坐标轴与标签设置
     ax_qr.set_yticks(y_pos)
     ax_qr.set_yticklabels(features, fontproperties=chinese_font, fontsize=12)
-    ax_qr.set_xlabel('标准化回归系数（Beta权重）\n（数值越大该特征对薪资提升越强，负值代表压低薪资）', 
+    ax_qr.set_xlabel('标准化回归系数（Beta权重）\\n（数值越大该特征对薪资提升越强，负值代表压低薪资）', 
                      fontproperties=chinese_font, fontsize=12)
     ax_qr.set_title('各特征在不同薪资分位数下的标准化影响系数深度对比', 
                     fontproperties=chinese_font, fontsize=16)
     ax_qr.legend(prop=chinese_font, loc='lower right')
     ax_qr.grid(axis='x', linestyle='--', alpha=0.5)
-
     ax_qr.autoscale(axis='x')
+    fig_qr.tight_layout()
     st.pyplot(fig_qr)
     st.info("""
 **图表说明**：该图展示了每个特征在不同薪资分位数（低薪25%、中薪50%、高薪75%）下的标准化回归系数，灰色虚线连接了低分位到高分位的系数变化。**经验水平**和**工作年份**在三个分位数下都保持最高的正向影响，且高薪群体（75%）受经验影响更大（系数更高），说明经验积累对顶尖薪资的拉动作用尤为明显。**公司所在地区**和**公司规模**的影响在中等薪资水平时较强，而**远程比例**和**雇佣类型**的系数接近零或略负，表明其对薪资分层贡献较小。
 """)
+    with st.expander("📄 查看此图表的代码"):
+        st.code("""
+fig_qr, ax_qr = plt.subplots(figsize=(10, 6))
+features = qr_result['特征'].tolist()
+q25 = qr_result['25%分位数系数'].tolist()
+q50 = qr_result['50%分位数系数'].tolist()
+q75 = qr_result['75%分位数系数'].tolist()
+y_pos = np.arange(len(features))
+
+ax_qr.hlines(y=y_pos, xmin=q25, xmax=q75, color='gray', linestyle='--', linewidth=1.5, alpha=0.6)
+ax_qr.scatter(q25, y_pos - 0.15, color='#1f77b4', label='25% 低薪分位数', s=90, zorder=5, marker='o')
+ax_qr.scatter(q50, y_pos, color='#ff7f0e', label='50% 中等薪资分位数', s=120, zorder=5, marker='D')
+ax_qr.scatter(q75, y_pos + 0.15, color='#2ca02c', label='75% 高薪分位数', s=90, zorder=5, marker='^')
+ax_qr.axvline(x=0, color='red', linestyle='-', linewidth=1, alpha=0.3, label='无影响基准')
+ax_qr.set_yticks(y_pos)
+ax_qr.set_yticklabels(features, fontproperties=chinese_font, fontsize=12)
+ax_qr.set_xlabel('标准化回归系数（Beta权重）\\n（数值越大该特征对薪资提升越强，负值代表压低薪资）', fontproperties=chinese_font, fontsize=12)
+ax_qr.set_title('各特征在不同薪资分位数下的标准化影响系数深度对比', fontproperties=chinese_font, fontsize=16)
+ax_qr.legend(prop=chinese_font, loc='lower right')
+ax_qr.grid(axis='x', linestyle='--', alpha=0.5)
+ax_qr.autoscale(axis='x')
+fig_qr.tight_layout()
+st.pyplot(fig_qr)
+        """, language="python")
     st.dataframe(qr_result, use_container_width=True)
 
     st.divider()
     st.subheader("高级图表3：带95%置信区间年度薪资趋势")
-    fig_trend, ax_trend = plt.subplots(figsize=(14,7))
+    fig_trend, ax_trend = plt.subplots(figsize=(11, 6))
     year_group['ci_lower'] = year_group['平均薪资'] - 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
     year_group['ci_upper'] = year_group['平均薪资'] + 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
     ax_trend.plot(year_group['work_year'], year_group['平均薪资'], marker='o', c='#0070C0', linewidth=3, label='平均薪资')
@@ -440,14 +564,32 @@ elif menu == "五、高级可视化分析":
     ax_trend.set_xticks(year_group['work_year'])
     ax_trend.legend(prop=chinese_font)
     ax_trend.grid(linestyle='--', alpha=0.5)
+    fig_trend.tight_layout()
     st.pyplot(fig_trend)
     st.info("""
 **图表说明**：折线图展示了2020年至2023年数据分析师的平均薪资和中位数薪资的逐年变化，同时用浅蓝色阴影表示平均薪资的95%置信区间（反映年度内薪资的波动范围）。整体趋势表明，平均薪资从约6.5万美元稳步增长至近10万美元，涨幅超过50%，行业处于高速增长期。置信区间逐年收窄，说明薪资分布趋于集中，市场定价更加成熟稳定。
 """)
+    with st.expander("📄 查看此图表的代码"):
+        st.code("""
+fig_trend, ax_trend = plt.subplots(figsize=(11, 6))
+year_group['ci_lower'] = year_group['平均薪资'] - 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
+year_group['ci_upper'] = year_group['平均薪资'] + 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
+ax_trend.plot(year_group['work_year'], year_group['平均薪资'], marker='o', c='#0070C0', linewidth=3, label='平均薪资')
+ax_trend.fill_between(year_group['work_year'], year_group['ci_lower'], year_group['ci_upper'], alpha=0.2, color='#0070C0', label='95%置信区间')
+ax_trend.plot(year_group['work_year'], year_group['中位数'], marker='s', c='#2E86AB', linestyle='--', label='中位数薪资')
+ax_trend.set_title('2020-2023薪资趋势（置信区间）', fontproperties=chinese_font, fontsize=16)
+ax_trend.set_xlabel('年份', fontproperties=chinese_font)
+ax_trend.set_ylabel('薪资(美元)', fontproperties=chinese_font)
+ax_trend.set_xticks(year_group['work_year'])
+ax_trend.legend(prop=chinese_font)
+ax_trend.grid(linestyle='--', alpha=0.5)
+fig_trend.tight_layout()
+st.pyplot(fig_trend)
+        """, language="python")
 
     st.divider()
     st.subheader("高级图表4：公司规模-经验薪资二维热力图")
-    fig_heatmap2d, ax_heatmap2d = plt.subplots(figsize=(12,8))
+    fig_heatmap2d, ax_heatmap2d = plt.subplots(figsize=(10, 7))
     pivot_table = df_clean.pivot_table(index='experience_level', columns='company_size', values='salary_in_usd', aggfunc='mean').reindex(index=exp_order, columns=size_order)
     im2 = ax_heatmap2d.imshow(pivot_table.values, cmap="Blues")
     ax_heatmap2d.set_xticks(np.arange(len(size_order)))
@@ -455,16 +597,34 @@ elif menu == "五、高级可视化分析":
     ax_heatmap2d.set_xticklabels([size_dict[s] for s in size_order], fontproperties=chinese_font)
     ax_heatmap2d.set_yticklabels([exp_dict[e] for e in exp_order], fontproperties=chinese_font)
     ax_heatmap2d.set_title('公司规模-经验水平平均薪资热力图', fontproperties=chinese_font, fontsize=16)
-    # 填充数值
     for i in range(len(exp_order)):
         for j in range(len(size_order)):
             val = int(pivot_table.iloc[i,j])
             ax_heatmap2d.text(j,i,str(val),ha="center",va="center",fontproperties=chinese_font)
     fig_heatmap2d.colorbar(im2, ax=ax_heatmap2d)
+    fig_heatmap2d.tight_layout()
     st.pyplot(fig_heatmap2d)
     st.info("""
 **图表说明**：热力图展示了不同经验水平与公司规模组合下的平均薪资（美元）。从横向看，**中型企业（M）** 在每一经验等级上都提供了最高的平均薪资，尤其在中级（MI）和高级（SE）阶段，其薪资远超大型和小型企业；从纵向看，**专家级（EX）** 在任何规模的企业中都是薪资最高的群体。这一结果进一步验证了中型企业对数据人才的积极溢价策略，以及经验积累带来的薪资跃升效应。
 """)
+    with st.expander("📄 查看此图表的代码"):
+        st.code("""
+fig_heatmap2d, ax_heatmap2d = plt.subplots(figsize=(10, 7))
+pivot_table = df_clean.pivot_table(index='experience_level', columns='company_size', values='salary_in_usd', aggfunc='mean').reindex(index=exp_order, columns=size_order)
+im2 = ax_heatmap2d.imshow(pivot_table.values, cmap="Blues")
+ax_heatmap2d.set_xticks(np.arange(len(size_order)))
+ax_heatmap2d.set_yticks(np.arange(len(exp_order)))
+ax_heatmap2d.set_xticklabels([size_dict[s] for s in size_order], fontproperties=chinese_font)
+ax_heatmap2d.set_yticklabels([exp_dict[e] for e in exp_order], fontproperties=chinese_font)
+ax_heatmap2d.set_title('公司规模-经验水平平均薪资热力图', fontproperties=chinese_font, fontsize=16)
+for i in range(len(exp_order)):
+    for j in range(len(size_order)):
+        val = int(pivot_table.iloc[i,j])
+        ax_heatmap2d.text(j,i,str(val),ha="center",va="center",fontproperties=chinese_font)
+fig_heatmap2d.colorbar(im2, ax=ax_heatmap2d)
+fig_heatmap2d.tight_layout()
+st.pyplot(fig_heatmap2d)
+        """, language="python")
 
 # ===================== 6. 分析结论与行业建议 =====================
 elif menu == "六、分析结论与行业建议":
