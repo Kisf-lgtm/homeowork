@@ -251,7 +251,7 @@ elif menu == "四、基础可视化图表与解读":
 
     # 图表1：薪资分布直方图
     st.subheader("图表1：薪资分布直方图")
-    fig1, ax1 = plt.subplots(figsize=(7.5, 3.75))  # 原 (10,5) ×0.75
+    fig1, ax1 = plt.subplots(figsize=(10, 5))  # 调小尺寸
     ax1.hist(df_clean['salary_in_usd'], bins=30, edgecolor='black', color='#0070C0', alpha=0.7)
     ax1.set_title('数据分析师薪资分布（美元）', fontproperties=chinese_font, fontsize=14)
     ax1.set_xlabel('薪资(美元)', fontproperties=chinese_font, fontsize=12)
@@ -267,7 +267,7 @@ elif menu == "四、基础可视化图表与解读":
 """)
     with st.expander("📄 查看此图表的代码"):
         st.code("""
-fig1, ax1 = plt.subplots(figsize=(7.5, 3.75))
+fig1, ax1 = plt.subplots(figsize=(10, 5))
 ax1.hist(df_clean['salary_in_usd'], bins=30, edgecolor='black', color='#0070C0', alpha=0.7)
 ax1.set_title('数据分析师薪资分布（美元）', fontproperties=chinese_font, fontsize=14)
 ax1.set_xlabel('薪资(美元)', fontproperties=chinese_font, fontsize=12)
@@ -282,7 +282,7 @@ st.pyplot(fig1)
 
     # 图表2：经验水平箱线图
     st.subheader("图表2：不同经验水平薪资箱线图")
-    fig2, ax2 = plt.subplots(figsize=(7.5, 3.75))  # 原 (10,5) ×0.75
+    fig2, ax2 = plt.subplots(figsize=(10, 5))
     box_data = [df_clean[df_clean['experience_level'] == level]['salary_in_usd'] for level in exp_order]
     box = ax2.boxplot(box_data, tick_labels=exp_order, patch_artist=True, boxprops=dict(facecolor='#0070C0', alpha=0.7))
     ax2.set_title('不同经验水平薪资箱线图', fontproperties=chinese_font, fontsize=14)
@@ -299,7 +299,7 @@ st.pyplot(fig1)
 """)
     with st.expander("📄 查看此图表的代码"):
         st.code("""
-fig2, ax2 = plt.subplots(figsize=(7.5, 3.75))
+fig2, ax2 = plt.subplots(figsize=(10, 5))
 box_data = [df_clean[df_clean['experience_level'] == level]['salary_in_usd'] for level in exp_order]
 ax2.boxplot(box_data, tick_labels=exp_order, patch_artist=True, boxprops=dict(facecolor='#0070C0', alpha=0.7))
 ax2.set_title('不同经验水平薪资箱线图', fontproperties=chinese_font, fontsize=14)
@@ -315,7 +315,7 @@ st.pyplot(fig2)
 
     # 图表3：不同公司规模平均薪资柱状图
     st.subheader("图表3：不同公司规模平均薪资柱状图")
-    fig4, ax4 = plt.subplots(figsize=(6.75, 3.75))  # 原 (9,5) ×0.75
+    fig4, ax4 = plt.subplots(figsize=(9, 5))
     company_label = ['小型S', '中型M', '大型L']
     bars4 = ax4.bar(company_label, size_group['平均薪资'], color='#2E86AB', alpha=0.8)
     ax4.set_title('不同公司规模平均薪资对比', fontproperties=chinese_font, fontsize=14)
@@ -332,7 +332,7 @@ st.pyplot(fig2)
 """)
     with st.expander("📄 查看此图表的代码"):
         st.code("""
-fig4, ax4 = plt.subplots(figsize=(6.75, 3.75))
+fig4, ax4 = plt.subplots(figsize=(9, 5))
 company_label = ['小型S', '中型M', '大型L']
 bars4 = ax4.bar(company_label, size_group['平均薪资'], color='#2E86AB', alpha=0.8)
 ax4.set_title('不同公司规模平均薪资对比', fontproperties=chinese_font, fontsize=14)
@@ -349,7 +349,7 @@ st.pyplot(fig4)
 
     # 图表4：年度薪资趋势折线图
     st.subheader("图表4：2020-2023年度薪资趋势折线图")
-    fig3, ax3 = plt.subplots(figsize=(7.5, 3.75))  # 原 (10,5) ×0.75
+    fig3, ax3 = plt.subplots(figsize=(10, 5))
     ax3.plot(year_group['work_year'], year_group['平均薪资'], marker='o', color='#0070C0', linewidth=2)
     ax3.set_title('2020-2023 薪资变化趋势', fontproperties=chinese_font, fontsize=14)
     ax3.set_xlabel('年份', fontproperties=chinese_font, fontsize=12)
@@ -366,7 +366,7 @@ st.pyplot(fig4)
 """)
     with st.expander("📄 查看此图表的代码"):
         st.code("""
-fig3, ax3 = plt.subplots(figsize=(7.5, 3.75))
+fig3, ax3 = plt.subplots(figsize=(10, 5))
 ax3.plot(year_group['work_year'], year_group['平均薪资'], marker='o', color='#0070C0', linewidth=2)
 ax3.set_title('2020-2023 薪资变化趋势', fontproperties=chinese_font, fontsize=14)
 ax3.set_xlabel('年份', fontproperties=chinese_font, fontsize=12)
@@ -383,7 +383,7 @@ st.pyplot(fig3)
 
     # 图表5：不同远程模式平均薪资
     st.subheader("图表5：不同远程模式平均薪资柱状图")
-    fig5, ax5 = plt.subplots(figsize=(6.75, 3.75))  # 原 (9,5) ×0.75
+    fig5, ax5 = plt.subplots(figsize=(9, 5))
     x5 = [0, 1, 2]
     remote_labels = ["无远程(0)", "混合远程(50)", "全远程(100)"]
     bars5 = ax5.bar(x5, remote_group['平均薪资'], color='#A23B72', alpha=0.8)
@@ -403,7 +403,7 @@ st.pyplot(fig3)
 """)
     with st.expander("📄 查看此图表的代码"):
         st.code("""
-fig5, ax5 = plt.subplots(figsize=(6.75, 3.75))
+fig5, ax5 = plt.subplots(figsize=(9, 5))
 x5 = [0, 1, 2]
 remote_labels = ["无远程(0)", "混合远程(50)", "全远程(100)"]
 bars5 = ax5.bar(x5, remote_group['平均薪资'], color='#A23B72', alpha=0.8)
@@ -423,7 +423,7 @@ st.pyplot(fig5)
 
     # 图表6：Top10高薪地区柱状图
     st.subheader("图表6：Top10高薪地区平均薪资对比")
-    fig6, ax6 = plt.subplots(figsize=(8.25, 3.75))  # 原 (11,5) ×0.75
+    fig6, ax6 = plt.subplots(figsize=(11, 5))
     top10_loc = location_group.head(10)
     bars6 = ax6.bar(top10_loc['company_location'], top10_loc['平均薪资'], color='#F18F01', alpha=0.8)
     ax6.set_title('Top10高薪地区平均薪资对比', fontproperties=chinese_font, fontsize=14)
@@ -439,7 +439,7 @@ st.pyplot(fig5)
 """)
     with st.expander("📄 查看此图表的代码"):
         st.code("""
-fig6, ax6 = plt.subplots(figsize=(8.25, 3.75))
+fig6, ax6 = plt.subplots(figsize=(11, 5))
 top10_loc = location_group.head(10)
 bars6 = ax6.bar(top10_loc['company_location'], top10_loc['平均薪资'], color='#F18F01', alpha=0.8)
 ax6.set_title('Top10高薪地区平均薪资对比', fontproperties=chinese_font, fontsize=14)
@@ -459,7 +459,7 @@ elif menu == "五、高级可视化分析":
 
     st.divider()
     st.subheader("高级图表1：特征相关性热力图")
-    fig_corr, ax_corr = plt.subplots(figsize=(6.75, 4.5))  # 原 (9,6) ×0.75
+    fig_corr, ax_corr = plt.subplots(figsize=(9, 6))
     corr_labels = ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模', '公司所在地区', '薪资(美元)']
     im = ax_corr.imshow(corr_matrix, cmap="Blues", vmin=-1, vmax=1)
     ax_corr.set_xticks(np.arange(len(corr_labels)))
@@ -479,7 +479,7 @@ elif menu == "五、高级可视化分析":
 """)
     with st.expander("📄 查看此图表的代码"):
         st.code("""
-fig_corr, ax_corr = plt.subplots(figsize=(6.75, 4.5))
+fig_corr, ax_corr = plt.subplots(figsize=(9, 6))
 corr_labels = ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模', '公司所在地区', '薪资(美元)']
 im = ax_corr.imshow(corr_matrix, cmap="Blues", vmin=-1, vmax=1)
 ax_corr.set_xticks(np.arange(len(corr_labels)))
@@ -498,7 +498,7 @@ st.pyplot(fig_corr)
 
     st.divider()
     st.subheader("高级图表2：不同薪资分位数的标准化影响系数对比（分组散点连线图）")
-    fig_qr, ax_qr = plt.subplots(figsize=(7.5, 4.5))  # 原 (10,6) ×0.75
+    fig_qr, ax_qr = plt.subplots(figsize=(10, 6))
     features = qr_result['特征'].tolist()
     q25 = qr_result['25%分位数系数'].tolist()
     q50 = qr_result['50%分位数系数'].tolist()
@@ -526,7 +526,7 @@ st.pyplot(fig_corr)
 """)
     with st.expander("📄 查看此图表的代码"):
         st.code("""
-fig_qr, ax_qr = plt.subplots(figsize=(7.5, 4.5))
+fig_qr, ax_qr = plt.subplots(figsize=(10, 6))
 features = qr_result['特征'].tolist()
 q25 = qr_result['25%分位数系数'].tolist()
 q50 = qr_result['50%分位数系数'].tolist()
@@ -552,7 +552,7 @@ st.pyplot(fig_qr)
 
     st.divider()
     st.subheader("高级图表3：带95%置信区间年度薪资趋势")
-    fig_trend, ax_trend = plt.subplots(figsize=(8.25, 4.5))  # 原 (11,6) ×0.75
+    fig_trend, ax_trend = plt.subplots(figsize=(11, 6))
     year_group['ci_lower'] = year_group['平均薪资'] - 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
     year_group['ci_upper'] = year_group['平均薪资'] + 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
     ax_trend.plot(year_group['work_year'], year_group['平均薪资'], marker='o', c='#0070C0', linewidth=3, label='平均薪资')
@@ -571,7 +571,7 @@ st.pyplot(fig_qr)
 """)
     with st.expander("📄 查看此图表的代码"):
         st.code("""
-fig_trend, ax_trend = plt.subplots(figsize=(8.25, 4.5))
+fig_trend, ax_trend = plt.subplots(figsize=(11, 6))
 year_group['ci_lower'] = year_group['平均薪资'] - 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
 year_group['ci_upper'] = year_group['平均薪资'] + 1.96 * (year_group['薪资标准差'] / np.sqrt(year_group['样本量']))
 ax_trend.plot(year_group['work_year'], year_group['平均薪资'], marker='o', c='#0070C0', linewidth=3, label='平均薪资')
@@ -589,7 +589,7 @@ st.pyplot(fig_trend)
 
     st.divider()
     st.subheader("高级图表4：公司规模-经验薪资二维热力图")
-    fig_heatmap2d, ax_heatmap2d = plt.subplots(figsize=(7.5, 5.25))  # 原 (10,7) ×0.75
+    fig_heatmap2d, ax_heatmap2d = plt.subplots(figsize=(10, 7))
     pivot_table = df_clean.pivot_table(index='experience_level', columns='company_size', values='salary_in_usd', aggfunc='mean').reindex(index=exp_order, columns=size_order)
     im2 = ax_heatmap2d.imshow(pivot_table.values, cmap="Blues")
     ax_heatmap2d.set_xticks(np.arange(len(size_order)))
@@ -609,7 +609,7 @@ st.pyplot(fig_trend)
 """)
     with st.expander("📄 查看此图表的代码"):
         st.code("""
-fig_heatmap2d, ax_heatmap2d = plt.subplots(figsize=(7.5, 5.25))
+fig_heatmap2d, ax_heatmap2d = plt.subplots(figsize=(10, 7))
 pivot_table = df_clean.pivot_table(index='experience_level', columns='company_size', values='salary_in_usd', aggfunc='mean').reindex(index=exp_order, columns=size_order)
 im2 = ax_heatmap2d.imshow(pivot_table.values, cmap="Blues")
 ax_heatmap2d.set_xticks(np.arange(len(size_order)))
@@ -625,7 +625,6 @@ fig_heatmap2d.colorbar(im2, ax=ax_heatmap2d)
 fig_heatmap2d.tight_layout()
 st.pyplot(fig_heatmap2d)
         """, language="python")
-
 # ===================== 6. 分析结论与行业建议 =====================
 elif menu == "六、分析结论与行业建议":
     st.header("💡 案例分析结论与建议")
@@ -826,7 +825,7 @@ elif menu == "八、交互式薪资探索器":
     col1, col2 = st.columns(2)
     with col1:
         # 薪资分布直方图
-        fig_hist, ax_hist = plt.subplots(figsize=(7.5, 4.5))  # 原 (10,6) ×0.75
+        fig_hist, ax_hist = plt.subplots(figsize=(10, 6))
         ax_hist.hist(df_filtered['salary_in_usd'], bins=20, edgecolor='black', color='#0070C0', alpha=0.7)
         ax_hist.set_title('筛选后薪资分布直方图', fontproperties=chinese_font, fontsize=14)
         ax_hist.set_xlabel('薪资(美元)', fontproperties=chinese_font, fontsize=12)
@@ -834,14 +833,13 @@ elif menu == "八、交互式薪资探索器":
         ax_hist.grid(axis='y', linestyle='--', alpha=0.7)
         plt.setp(ax_hist.get_xticklabels(), fontproperties=chinese_font)
         plt.setp(ax_hist.get_yticklabels(), fontproperties=chinese_font)
-        fig_hist.tight_layout()
         st.pyplot(fig_hist)
     with col2:
         # 经验水平薪资箱线图
         if len(exp_filter) > 1 and len(df_filtered) > 0:
             exist_levels = [l for l in exp_filter if l in df_filtered['experience_level'].unique()]
             if len(exist_levels) > 1:
-                fig_box, ax_box = plt.subplots(figsize=(7.5, 4.5))  # 原 (10,6) ×0.75
+                fig_box, ax_box = plt.subplots(figsize=(10, 6))
                 box_data = [df_filtered[df_filtered['experience_level'] == level]['salary_in_usd'] for level in exist_levels]
                 box_labels = [exp_dict[level] for level in exist_levels]
                 box = ax_box.boxplot(box_data, tick_labels=box_labels, patch_artist=True, boxprops=dict(facecolor='#0070C0', alpha=0.7))
@@ -851,7 +849,6 @@ elif menu == "八、交互式薪资探索器":
                 ax_box.grid(axis='y', linestyle='--', alpha=0.7)
                 plt.setp(ax_box.get_xticklabels(), fontproperties=chinese_font)
                 plt.setp(ax_box.get_yticklabels(), fontproperties=chinese_font)
-                fig_box.tight_layout()
                 st.pyplot(fig_box)
             else:
                 st.info("当前筛选下有效经验等级不足2个，无法绘制对比箱线图")
