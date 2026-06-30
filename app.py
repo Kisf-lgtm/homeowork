@@ -11,16 +11,74 @@ import os
 
 # ========= 修复：云端Linux / 本地Windows 双环境中文字体适配 =========
 try:
-    # Streamlit云端Linux：文泉驿正黑
     plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei']
     chinese_font = FontProperties(fname="/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc")
 except:
-    # 本地Windows兜底字体
     plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei']
     chinese_font = FontProperties(family="SimHei")
-
-# 解决负号显示方块问题
 plt.rcParams['axes.unicode_minus'] = False
+
+# ========= 自定义 CSS + JavaScript：侧边栏拖动时文字自适应 =========
+st.markdown("""
+<style>
+    /* 让侧边栏保持可拖动（不要固定宽度） */
+    section[data-testid="stSidebar"] {
+        /* 不设置 width，保留默认 flex 行为，用户可拖动分隔条 */
+        min-width: 180px;
+        max-width: 400px;
+    }
+    /* 侧边栏内部内边距 */
+    section[data-testid="stSidebar"] > div {
+        padding: 2rem 1rem !important;
+    }
+    /* 导航 radio 按钮样式 - 字体大小由 JS 动态控制 */
+    .stRadio label {
+        font-size: var(--sidebar-font-size, 16px) !important;
+        line-height: 1.6 !important;
+        padding: 0.4rem 0.6rem !important;
+        border-radius: 6px;
+        transition: background-color 0.2s;
+    }
+    .stRadio label:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+    }
+    /* 侧边栏标题（如有）也可动态调整 */
+    .css-1d391kg, .css-1v3fvcr {
+        font-size: calc(var(--sidebar-font-size, 16px) * 1.3) !important;
+    }
+</style>
+
+<script>
+    // 等待 DOM 加载完成
+    function initSidebarResize() {
+        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        if (!sidebar) {
+            setTimeout(initSidebarResize, 200);
+            return;
+        }
+        // 更新字体大小的函数
+        function updateFontSize() {
+            const width = sidebar.offsetWidth;
+            // 根据宽度计算字体大小：宽度 180px -> 12px，宽度 400px -> 28px
+            let size = 12 + (width - 180) * (16 / 220); // 16px 变化范围
+            size = Math.min(28, Math.max(12, size));
+            // 设置 CSS 变量
+            sidebar.style.setProperty('--sidebar-font-size', size + 'px');
+        }
+        // 使用 ResizeObserver 监听侧边栏尺寸变化
+        const observer = new ResizeObserver(() => {
+            updateFontSize();
+        });
+        observer.observe(sidebar);
+        // 初始更新一次
+        updateFontSize();
+        // 如果页面缩放，也重新计算
+        window.addEventListener('resize', updateFontSize);
+    }
+    // 启动
+    initSidebarResize();
+</script>
+""", unsafe_allow_html=True)
 
 # 页面全局配置
 st.set_page_config(
@@ -49,7 +107,6 @@ def load_and_preprocess_data():
     df = pd.read_csv(CSV_PATH)
     df_clean = df.copy()
 
-    # IQR剔除薪资异常值
     Q1 = df_clean['salary_in_usd'].quantile(0.25)
     Q3 = df_clean['salary_in_usd'].quantile(0.75)
     IQR = Q3 - Q1
@@ -57,11 +114,8 @@ def load_and_preprocess_data():
     upper_bound = Q3 + 1.5 * IQR
     df_clean = df_clean[(df_clean['salary_in_usd'] >= lower_bound) & (df_clean['salary_in_usd'] <= upper_bound)]
 
-    # 定序变量映射
     exp_map = {'EN': 0, 'MI': 1, 'SE': 2, 'EX': 3}
     size_map = {'S': 0, 'M': 1, 'L': 2}
-    
-    # 标签编码器（仅用于无序分类变量）
     le_employment = LabelEncoder()
     le_location = LabelEncoder()
     le_job = LabelEncoder()
@@ -73,22 +127,18 @@ def load_and_preprocess_data():
     df_encoded['company_location'] = le_location.fit_transform(df_encoded['company_location'])
     df_encoded['job_title'] = le_job.fit_transform(df_encoded['job_title'])
 
-    # 准备特征
     feature_cols = ['work_year', 'experience_level', 'employment_type', 'remote_ratio', 'company_size', 'company_location']
     X = df_encoded[feature_cols]
     y = df_encoded['salary_in_usd']
 
-    # ========= 核心修复：引入标准化器 =========
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    # 训练线性回归模型（基于标准化后的特征）
     model = LinearRegression()
     model.fit(X_scaled, y)
     y_pred = model.predict(X_scaled)
     r2 = r2_score(y, y_pred)
 
-    # 分位数回归模型（调低 alpha 避免过度压缩）
     qr_model_25 = QuantileRegressor(quantile=0.25, alpha=0.01, solver='highs')
     qr_model_50 = QuantileRegressor(quantile=0.5, alpha=0.01, solver='highs')
     qr_model_75 = QuantileRegressor(quantile=0.75, alpha=0.01, solver='highs')
@@ -96,7 +146,6 @@ def load_and_preprocess_data():
     qr_model_50.fit(X_scaled, y)
     qr_model_75.fit(X_scaled, y)
 
-    # 多维度分组统计
     exp_group = df_clean.groupby('experience_level')['salary_in_usd'].agg(
         样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
     ).reset_index()
@@ -122,13 +171,11 @@ def load_and_preprocess_data():
         样本量='count', 平均薪资='mean', 中位数='median', 最低='min', 最高='max'
     ).reset_index().sort_values('平均薪资', ascending=False)
 
-    # 回归结果（标准化系数）
     reg_result = pd.DataFrame({
         '特征': ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模', '公司所在地区'],
         '回归系数': model.coef_
     }).sort_values('回归系数', ascending=False)
 
-    # 分位数回归结果
     qr_result = pd.DataFrame({
         '特征': ['工作年份', '经验水平', '雇佣类型', '远程比例', '公司规模', '公司所在地区'],
         '25%分位数系数': qr_model_25.coef_,
@@ -136,14 +183,13 @@ def load_and_preprocess_data():
         '75%分位数系数': qr_model_75.coef_
     })
 
-    # 相关系数矩阵
     corr_matrix = df_encoded[feature_cols + ['salary_in_usd']].corr()
 
     return df, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2, \
            model, exp_map, le_employment, size_map, le_location, le_job, qr_result, corr_matrix, \
            qr_model_25, qr_model_50, qr_model_75, scaler
 
-# 解包数据（新增 scaler）
+# 解包数据
 df_raw, df_clean, exp_group, size_group, year_group, remote_group, location_group, reg_result, r2_score_val, \
 model, exp_map, le_employment, size_map, le_location, le_job, qr_result, corr_matrix, \
 qr_model_25, qr_model_50, qr_model_75, scaler = load_and_preprocess_data()
@@ -251,7 +297,7 @@ elif menu == "四、基础可视化图表与解读":
 
     # 图表1：薪资分布直方图
     st.subheader("图表1：薪资分布直方图")
-    fig1, ax1 = plt.subplots(figsize=(10, 5))  # 调小尺寸
+    fig1, ax1 = plt.subplots(figsize=(10, 5))
     ax1.hist(df_clean['salary_in_usd'], bins=30, edgecolor='black', color='#0070C0', alpha=0.7)
     ax1.set_title('数据分析师薪资分布（美元）', fontproperties=chinese_font, fontsize=14)
     ax1.set_xlabel('薪资(美元)', fontproperties=chinese_font, fontsize=12)
@@ -452,7 +498,7 @@ fig6.tight_layout()
 st.pyplot(fig6)
         """, language="python")
 
-# ===================== 5. 高级可视化分析（全部移除seaborn绘图，仅保留原生matplotlib） =====================
+# ===================== 5. 高级可视化分析 =====================
 elif menu == "五、高级可视化分析":
     st.header("🔬 高级可视化分析（专业级深度洞察）")
     st.markdown("本模块使用原生Matplotlib绘制专业图表，深度挖掘薪资数据底层规律。")
@@ -625,6 +671,7 @@ fig_heatmap2d.colorbar(im2, ax=ax_heatmap2d)
 fig_heatmap2d.tight_layout()
 st.pyplot(fig_heatmap2d)
         """, language="python")
+
 # ===================== 6. 分析结论与行业建议 =====================
 elif menu == "六、分析结论与行业建议":
     st.header("💡 案例分析结论与建议")
@@ -708,7 +755,6 @@ elif menu == "七、在线薪资预测工具":
         loc_code = le_location.transform([location])[0]
 
         input_features = np.array([[work_year, exp_code, emp_code, remote_ratio, com_code, loc_code]])
-        # 使用标准化器转换
         input_features_scaled = scaler.transform(input_features)
 
         predicted_salary = model.predict(input_features_scaled)[0]
@@ -740,12 +786,11 @@ elif menu == "七、在线薪资预测工具":
 4. 可修改参数对比不同场景薪资差异。
         """)
 
-# ===================== 8. 交互式薪资探索器（补全截断代码） =====================
+# ===================== 8. 交互式薪资探索器 =====================
 elif menu == "八、交互式薪资探索器":
     st.header("🔍 交互式薪资探索器（自定义维度深度分析）")
     st.markdown("通过下拉框和滑块自定义筛选条件，动态探索不同维度下的薪资分布、统计数据和可视化图表。")
 
-    # 筛选条件
     col1, col2, col3 = st.columns(3)
     with col1:
         exp_filter = st.multiselect(
@@ -789,7 +834,6 @@ elif menu == "八、交互式薪资探索器":
             step=1000
         )
 
-    # 应用筛选条件
     df_filtered = df_clean[
         (df_clean['experience_level'].isin(exp_filter)) &
         (df_clean['company_size'].isin(size_filter)) &
@@ -799,7 +843,6 @@ elif menu == "八、交互式薪资探索器":
         (df_clean['salary_in_usd'].between(salary_filter[0], salary_filter[1]))
     ]
 
-    # 筛选结果统计
     st.divider()
     st.subheader("📊 筛选结果统计")
     col1, col2, col3, col4 = st.columns(4)
@@ -815,16 +858,13 @@ elif menu == "八、交互式薪资探索器":
         max_sal = df_filtered['salary_in_usd'].max() if len(df_filtered) > 0 else 0
         st.metric("薪资最大值", f"${max_sal:,.0f}")
 
-    # 筛选后数据预览
     st.subheader("筛选后数据预览（前10行）")
     st.dataframe(df_filtered.head(10), use_container_width=True)
 
-    # 动态可视化图表
     st.divider()
     st.subheader("📈 筛选后薪资分布可视化")
     col1, col2 = st.columns(2)
     with col1:
-        # 薪资分布直方图
         fig_hist, ax_hist = plt.subplots(figsize=(10, 6))
         ax_hist.hist(df_filtered['salary_in_usd'], bins=20, edgecolor='black', color='#0070C0', alpha=0.7)
         ax_hist.set_title('筛选后薪资分布直方图', fontproperties=chinese_font, fontsize=14)
@@ -835,7 +875,6 @@ elif menu == "八、交互式薪资探索器":
         plt.setp(ax_hist.get_yticklabels(), fontproperties=chinese_font)
         st.pyplot(fig_hist)
     with col2:
-        # 经验水平薪资箱线图
         if len(exp_filter) > 1 and len(df_filtered) > 0:
             exist_levels = [l for l in exp_filter if l in df_filtered['experience_level'].unique()]
             if len(exist_levels) > 1:
@@ -855,7 +894,6 @@ elif menu == "八、交互式薪资探索器":
         else:
             st.info("仅选择了1个经验水平，无法绘制箱线图对比")
 
-    # 按经验水平分组统计
     st.divider()
     st.subheader("📋 筛选后按经验水平分组统计")
     if len(exp_filter) > 0 and len(df_filtered) > 0:
