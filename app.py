@@ -18,49 +18,66 @@ except:
     chinese_font = FontProperties(family="SimHei")
 plt.rcParams['axes.unicode_minus'] = False
 
-# ========= 自定义 CSS：侧边栏响应式优化 =========
+# ========= 自定义 CSS + JavaScript：侧边栏拖动时文字自适应 =========
 st.markdown("""
 <style>
-    /* 侧边栏宽度自适应 */
+    /* 让侧边栏保持可拖动（不要固定宽度） */
     section[data-testid="stSidebar"] {
-        width: min(300px, 25vw) !important;
-        min-width: 180px !important;
-        max-width: 350px !important;
+        /* 不设置 width，保留默认 flex 行为，用户可拖动分隔条 */
+        min-width: 180px;
+        max-width: 400px;
     }
-    /* 侧边栏内部内边距调整 */
+    /* 侧边栏内部内边距 */
     section[data-testid="stSidebar"] > div {
         padding: 2rem 1rem !important;
     }
-    /* 导航 radio 按钮组样式 */
-    .stRadio > div {
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-    }
+    /* 导航 radio 按钮样式 - 字体大小由 JS 动态控制 */
     .stRadio label {
-        font-size: clamp(14px, 1.8vw, 24px) !important;
+        font-size: var(--sidebar-font-size, 16px) !important;
         line-height: 1.6 !important;
-        padding: 0.3rem 0.5rem !important;
-        transition: all 0.2s ease;
+        padding: 0.4rem 0.6rem !important;
         border-radius: 6px;
+        transition: background-color 0.2s;
     }
     .stRadio label:hover {
         background-color: rgba(255, 255, 255, 0.08);
     }
-    /* 侧边栏标题（如有）字体也自适应 */
+    /* 侧边栏标题（如有）也可动态调整 */
     .css-1d391kg, .css-1v3fvcr {
-        font-size: clamp(16px, 2vw, 28px) !important;
+        font-size: calc(var(--sidebar-font-size, 16px) * 1.3) !important;
     }
-    /* 让侧边栏内容垂直居中（可选） */
-    section[data-testid="stSidebar"] > div {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        height: 100%;
-    }
-    /* 但 radio 本身保持从顶部开始，不强制居中，以免滚动时别扭，所以去掉justify-content */
-    /* 保持默认即可 */
 </style>
+
+<script>
+    // 等待 DOM 加载完成
+    function initSidebarResize() {
+        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        if (!sidebar) {
+            setTimeout(initSidebarResize, 200);
+            return;
+        }
+        // 更新字体大小的函数
+        function updateFontSize() {
+            const width = sidebar.offsetWidth;
+            // 根据宽度计算字体大小：宽度 180px -> 12px，宽度 400px -> 28px
+            let size = 12 + (width - 180) * (16 / 220); // 16px 变化范围
+            size = Math.min(28, Math.max(12, size));
+            // 设置 CSS 变量
+            sidebar.style.setProperty('--sidebar-font-size', size + 'px');
+        }
+        // 使用 ResizeObserver 监听侧边栏尺寸变化
+        const observer = new ResizeObserver(() => {
+            updateFontSize();
+        });
+        observer.observe(sidebar);
+        // 初始更新一次
+        updateFontSize();
+        // 如果页面缩放，也重新计算
+        window.addEventListener('resize', updateFontSize);
+    }
+    // 启动
+    initSidebarResize();
+</script>
 """, unsafe_allow_html=True)
 
 # 页面全局配置
