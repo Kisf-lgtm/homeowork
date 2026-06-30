@@ -18,10 +18,9 @@ except:
     chinese_font = FontProperties(family="SimHei")
 plt.rcParams['axes.unicode_minus'] = False
 
-# ========= 自定义 CSS + JavaScript：侧边栏拖动时文字自适应 + 右侧内容响应式 =========
+# ========= 自定义 CSS + JavaScript：侧边栏拖动 + 右侧内容响应式 =========
 st.markdown("""
 <style>
-    /* 侧边栏样式 */
     section[data-testid="stSidebar"] {
         min-width: 180px;
         max-width: 400px;
@@ -43,25 +42,21 @@ st.markdown("""
         font-size: calc(var(--sidebar-font-size, 16px) * 1.3) !important;
     }
 
-    /* ===== 新增响应式字体：右侧代码和说明随窗口缩放 ===== */
-    /* 代码块字体 */
+    /* 右侧代码和说明响应式字体（下限更小） */
     .stCodeBlock pre {
-        font-size: clamp(10px, 1.2vw, 16px) !important;
-        line-height: 1.4 !important;
+        font-size: clamp(8px, 1.2vw, 16px) !important;
+        line-height: 1.3 !important;
     }
-    /* Info 提示框字体 */
     .stAlert {
-        font-size: clamp(12px, 1.4vw, 18px) !important;
-        padding: 0.5rem 1rem !important;
+        font-size: clamp(10px, 1.2vw, 18px) !important;
+        padding: 0.3rem 0.8rem !important;
     }
-    /* Expander 标题也适当调整 */
     .streamlit-expanderHeader {
-        font-size: clamp(13px, 1.5vw, 18px) !important;
+        font-size: clamp(12px, 1.4vw, 18px) !important;
     }
 </style>
 
 <script>
-    // 侧边栏自适应（不变）
     function initSidebarResize() {
         const sidebar = document.querySelector('section[data-testid="stSidebar"]');
         if (!sidebar) {
@@ -298,9 +293,9 @@ elif menu == "三、数据总览与统计报表":
 elif menu == "四、基础可视化图表与解读":
     st.header("📷 基础可视化图表及详细说明")
 
-    # 辅助函数：左侧显示图表，右侧显示代码和说明
+    # 辅助函数：左侧显示图表，右侧显示代码和说明（列宽比例 3:1）
     def show_chart_with_code(fig, info_text, code_str):
-        col_chart, col_info = st.columns([2, 1])
+        col_chart, col_info = st.columns([3, 1])   # 图表占3份，右侧占1份
         with col_chart:
             st.pyplot(fig)
         with col_info:
@@ -497,7 +492,7 @@ elif menu == "五、高级可视化分析":
     st.markdown("本模块使用原生Matplotlib绘制专业图表，深度挖掘薪资数据底层规律。")
 
     def show_chart_with_code(fig, info_text, code_str):
-        col_chart, col_info = st.columns([2, 1])
+        col_chart, col_info = st.columns([3, 1])
         with col_chart:
             st.pyplot(fig)
         with col_info:
